@@ -78,7 +78,7 @@ s3,S3 does not enforce certain security headers by default. An attacker can use 
 s3,Bucket names are globally unique. An attacker can take over a legitimate external bucket and deceive you into sending data to their bucket.
 s3,Objects and buckets can have tags. An attacker can use those features to exfiltrate data.
 s3,"S3 provides URLs to buckets using the bucket name (i.e. ""mybucket.s3.amazonaws.com""). An attacker can create a bucket with the name of your trademark to phish users."
-s3,"AWS managed policies can be attached to your IAM entities, but their permissions are managed by AWS. An attacker (including AWS insider via a <a target3D""_blank"" href3D""https://aws.amazon.com/security/security-bulletins/AWS-2021-007/"">service-linked role) can use an over-privileged managed permission to execute an attack."
+s3,"AWS managed policies can be attached to your IAM entities, but their permissions are managed by AWS. An attacker (including AWS insider via a service-linked role) can use an over-privileged managed permission to execute an attack."
 s3,Restore cost can be amplified by the size and the type (i.e. expedited). An attacker can restore lots of data to generate costs.
 s3,Versioning can be used as the first level of integrity protection. An attacker can suspend versioning to affect the data protection of a bucket.
 s3,Replication can be used as a level of integrity protection and backup. An attacker can remove replication to affect the data protection.
@@ -86,7 +86,7 @@ s3,S3 access logs can be used by SIEM to detect abnormal behaviors. An attacker 
 s3,S3 access logs can be used by SIEM to detect abnormal behaviors. An attacker can disable S3 access logs via bucket policy changes on the logging destination bucket to evade detection.
 s3,S3 access logs can be used by SIEM to detect abnormal behaviors. An attacker can modify or disable S3 access logs to evade detection.
 s3,"Event notification sends the key to any configured SQS, SNS or Lambda (cross-account), or EventBridge (same account). An attacker can use the name of objects (1KB) to exfiltrate data."
-s3,Inventory sends the object names (i.e. keys) to any configured S3 bucket. An attacker can use the name of objects (1KB) to exfiltrate data.div>
+s3,Inventory sends the object names (i.e. keys) to any configured S3 bucket. An attacker can use the name of objects (1KB) to exfiltrate data.
 s3,S3 allows you to add root account emails in ACL 
 s3,AWS provides error messages in the S3 bucket policy that can be used for basic recon. An attacker can discover whether an AWS account with a specific AWS account ID or AWS IAM principal exists by modifying the S3 policy to grant some rights to the said AWS account/IAM principal.
 s3,"S3 was launched in 2006, and its features have evolved. An attacker can use older features that have been proven less secure by AWS (e.g. certain API configuration,"
@@ -647,7 +647,7 @@ ros_2,An attacker gains access to the robot OS through its administration interf
 ros_2,A node accidentally writes incorrect data to a communication channel.
 ros_2,An attacker deploys a malicious component on the robot.
 ros_2,An attacker can prevent a component running on the robot from executing normally.
-ros_2,An attacker modifies configuration values without authorization.</td>
+ros_2,An attacker modifies configuration values without authorization.
 ros_2,An attacker accesses configuration values without authorization.
 ros_2,A user accidentally misconfigures the robot.
 ros_2,An attacker modifies the robot file system by physically accessing it.
@@ -677,7 +677,7 @@ ros_2,An attacker writes to a communication channel without authorization.
 ros_2,An attacker listens to a communication channel without authorization.
 ros_2,An attacker prevents a communication channel from beingusable.
 ros_2,An attacker hijacks robot long-range communication
-ros_2,An attacker intercepts robot long-range communications (e.g. MitM)</td>
+ros_2,An attacker intercepts robot long-range communications (e.g. MitM)
 ros_2,An attacker disrupts (e.g. jams) robot long-range  communication channels.
 ros_2,An attacker executes arbitrary code using a short-range communication  protocol vulnerability.
 ros_2,An attacker compromises the real-time clock to disrupt the kernel RT scheduling guarantees.
