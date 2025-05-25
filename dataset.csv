@@ -1,0 +1,740 @@
+system,threat_title
+oauth2.0,Obtaining Client Secrets
+oauth2.0,Obtaining Refresh Tokens
+oauth2.0,Obtaining Access Tokens
+oauth2.0,End-User Credentials Phished Using Compromised or Embedded Browser
+oauth2.0,Open Redirectors on Client
+oauth2.0,Password Phishing by Counterfeit Authorization Server
+oauth2.0,User Unintentionally Grants Too Much Access Scope
+oauth2.0,Malicious Client Obtains Existing Authorization by Fraud
+oauth2.0,Open Redirector
+oauth2.0,Eavesdropping Access Tokens
+oauth2.0,Obtaining Access Tokens from Authorization Server Database
+oauth2.0,Disclosure of Client Credentials during Transmission
+oauth2.0,Obtaining Client Secret from Authorization Server Database
+oauth2.0,Obtaining Client Secret by Online Guessing
+oauth2.0,"Eavesdropping or Leaking Authorization ""codes"""
+oauth2.0,"Obtaining Authorization ""codes"" from Authorization Server Database"
+oauth2.0,"Online Guessing of Authorization ""codes"""
+oauth2.0,Malicious Client Obtains Authorization
+oauth2.0,"Authorization ""code"" Phishing"
+oauth2.0,User Session Impersonation
+oauth2.0,"Authorization ""code"" Leakage through Counterfeit Client"
+oauth2.0,CSRF Attack against redirect-uri
+oauth2.0,Clickjacking Attack against Authorization
+oauth2.0,Resource Owner Impersonation
+oauth2.0,DoS Attacks That Exhaust Resources
+oauth2.0,"DoS Using Manufactured Authorization ""codes"""
+oauth2.0,Code Substitution (OAuth Login)
+oauth2.0,Access Token Leak in Transport/Endpoints
+oauth2.0,Access Token Leak in Browser History
+oauth2.0,Manipulation of Scripts
+oauth2.0,CSRF Attack against redirect-uri
+oauth2.0,Token Substitution (OAuth Login)
+oauth2.0,Accidental Exposure of Passwords at Client Site
+oauth2.0,Client Obtains Scopes without End-User Authorization
+oauth2.0,Client Obtains Refresh Token through Automatic Authorization
+oauth2.0,Obtaining User Passwords on Transport
+oauth2.0,Obtaining User Passwords from Authorization Server
+oauth2.0,Eavesdropping Refresh Tokens from Authorization Server
+oauth2.0,Obtaining Refresh Token from Authorization Server
+oauth2.0,Obtaining Refresh Token by Online Guessing
+oauth2.0,Refresh Token Phishing by Counterfeit Authorization Server
+oauth2.0,Eavesdropping Access Tokens on Transport
+oauth2.0,Replay of Authorized Resource Server Requests
+oauth2.0,Guessing Access Tokens
+oauth2.0,Access Token Phishing by Counterfeit Resource Server
+oauth2.0,Abuse of Token by Legitimate Resource Server or Client
+oauth2.0,Leak of Confidential Data in HTTP Proxies
+oauth2.0,Token Leakage via Log Files and HTTP Referrers
+s3,IAM credentials can be compromised (directly or using pre-signed URL). An attacker can use a compromised but authorized IAM credential to download your object from an internal bucket via the public endpoint (using or not their own VPC endpoint).
+s3,S3 buckets are commonly used to distribute software. An attacker can upload malware in a bucket to better position it for later use or directly change an object to include malware
+s3,"S3 Object Ownership enables a bucket receiver to convert a bucket-owner-full-control ACL into an ownership transfer (for a new object); additionally, a bucket can convert all the objects to be owned by the bucket owner. An attacker can modify the receiver bucket to remove your object ACL control on an object and remove your access to this object."
+s3,"Bucket policy can enable access to objects owned by the bucket. An attacker (or someone by negligence) can change the bucket policy and make the content accessible (via public endpoints, cross-account VPC endpoints, or cross-account access point)."
+s3,Access point policy can enable access to objects owned by the bucket. An attacker (or someone by negligence) can change the access point policy and make the content accessible.
+s3,Multi-Region Access Point policy can enable access to objects owned by the bucket. An attacker (or someone by negligence) can change the Multi-Region Access Point policy and make the content accessible.
+s3,S3 provides several types of encryption where the key is not operated by AWS (e.g. SSE-KMS with Bring Your Own Key). An attacker can encrypt all the data stored in S3 to ransom the data owner to get the decryption key.
+s3,Exfiltrate data by uploading it to an attacker bucket using a non-authenticated user or an unauthorized external IAM entity via one of your S3 VPC endpoints
+s3,"S3 Batch Operations require an IAM role (with proper trust policy), then can run operations including replicating existing objects, copying, or replacing/deleting object tags. An attacker can use Batch copy or modify objects to exfiltrate or change the access management of an object (if relying on a tag)."
+s3,Object made public or accessible in a private bucket you own by changing object ACL
+s3,"Number of AWS services are using S3 for storage, including storing in cross-account S3 buckets. Services with IAM roles (e.g. SageMaker) will give ownership to the target AWS account, removing ownership protection. An attacker can use those services to exfiltrate data."
+s3,IAM credentials can be compromised. An attacker can use a compromised but authorized credential to download your object from an external bucket via the public endpoint or their VPC endpoint.
+s3,S3 buckets can be public for a legitimate reason. An attacker (or someone by negligence) can upload sensitive data in an accessible bucket (e.g. public) you do not own to make it accessible to exfiltrate data.
+s3,"VPC endpoints for S3 allow IAM entities to connect from a VPC to any S3 bucket without an Internet Gateway. An attacker can exfiltrate pre-collected data to an external S3 bucket via a VPC endpoint, using an internal IAM entity they control. If the attacker does not control object ACL, they can use the name of objects (1KB)."
+s3,S3 website enables users to be served client-side scripts (e.g. JavaScript). An attacker can upload a client-side script with malware (e.g. cryptomining) to the visitor.
+s3,CloudFront distributions can use S3 buckets or access points as their origin. An attacker can connect a CloudFront distribution to a private S3 bucket to get access to it. Note: S3 resource policies can allow a cloudfront.amazonaws.com principal which could allow any distributions if not restricted.
+s3,Lifecycle allows you to delete objects after its configured expiry. An attacker can use a lifecycle configuration to destroy data.
+s3,"Bucket names are globally unique and can be recreated after 1 hour from deletion in another AWS account. An attacker can recreate the same bucket name of a deleted bucket you used to own to collect any new data uploaded by a non-updated party, do a DNS takeover (using a non-deleted CNAME / CloudFront origin to the bucket), or use remaining permissions to exfiltrate data."
+s3,Bucket Public Access Block protects individual buckets from leakage (e.g. object ACL set to public). An attacker can remove this protection by modifying the bucket Public Access Block.
+s3,Account Public Access Block protects all buckets of an AWS account from leakage (e.g. object ACL set to public). An attacker can remove this protection by modifying the account's Public Access Block.
+s3,"S3 allows communication over HTTP. An attacker can intercept the traffic you send to an external bucket, in order to read or modify the data."
+s3,"Access points can be deleted and recreated with the same name, and therefore the same ARN. An attacker can delete an access point and recreate the same, on a bucket they control to collect/modify data; or make it accessible over the Internet."
+s3,"S3 allows communication over HTTP. An attacker can intercept the traffic you send on an internal bucket, in order to read or modify the data."
+s3,"Replication allows you to replicate objects and their metadata and change ownership. The configuration only focuses on new objects (old objects replication requires S3 Batch Replication). An attacker can configure replication on a bucket to replicate objects (or its metadata or tagging) in a bucket they control to exfiltrate data. As objects encrypted via SSE-C are also replicated without additional configuration or access requirements, an attacker can then decrypt it in their own bucket if they have the SSE-C key."
+s3,Access points from a given AWS account can be connected to a cross-account bucket. An attacker can create an access point connected to a bucket they control to exfiltrate data.
+s3,Multiple types of environments are usually operated in AWS. An attacker can move the data from a secure location (e.g. production) to a less secure location (e.g. dev).
+s3,"Number of AWS services can access S3 to execute their functions. An attacker can use them to collect data, using their service role or service-linked roles."
+s3,S3 does not enforce certain security headers by default. An attacker can use an iFrame on your website to trick users to interact with their own scripts.
+s3,Bucket names are globally unique. An attacker can take over a legitimate external bucket and deceive you into sending data to their bucket.
+s3,Objects and buckets can have tags. An attacker can use those features to exfiltrate data.
+s3,"S3 provides URLs to buckets using the bucket name (i.e. ""mybucket.s3.amazonaws.com""). An attacker can create a bucket with the name of your trademark to phish users."
+s3,"AWS managed policies can be attached to your IAM entities, but their permissions are managed by AWS. An attacker (including AWS insider via a <a target3D""_blank"" href3D""https://aws.amazon.com/security/security-bulletins/AWS-2021-007/"">service-linked role) can use an over-privileged managed permission to execute an attack."
+s3,Restore cost can be amplified by the size and the type (i.e. expedited). An attacker can restore lots of data to generate costs.
+s3,Versioning can be used as the first level of integrity protection. An attacker can suspend versioning to affect the data protection of a bucket.
+s3,Replication can be used as a level of integrity protection and backup. An attacker can remove replication to affect the data protection.
+s3,S3 access logs can be used by SIEM to detect abnormal behaviors. An attacker can disable S3 access logs via bucket ACL changes on the logging destination bucket to evade detection.
+s3,S3 access logs can be used by SIEM to detect abnormal behaviors. An attacker can disable S3 access logs via bucket policy changes on the logging destination bucket to evade detection.
+s3,S3 access logs can be used by SIEM to detect abnormal behaviors. An attacker can modify or disable S3 access logs to evade detection.
+s3,"Event notification sends the key to any configured SQS, SNS or Lambda (cross-account), or EventBridge (same account). An attacker can use the name of objects (1KB) to exfiltrate data."
+s3,Inventory sends the object names (i.e. keys) to any configured S3 bucket. An attacker can use the name of objects (1KB) to exfiltrate data.div>
+s3,S3 allows you to add root account emails in ACL 
+s3,AWS provides error messages in the S3 bucket policy that can be used for basic recon. An attacker can discover whether an AWS account with a specific AWS account ID or AWS IAM principal exists by modifying the S3 policy to grant some rights to the said AWS account/IAM principal.
+s3,"S3 was launched in 2006, and its features have evolved. An attacker can use older features that have been proven less secure by AWS (e.g. certain API configuration,"
+s3,S3 VPC endpoints can be either Interface or Gateway. An attacker can create a second endpoint to create an ungoverned exfiltration vector.
+s3,S3 charges for hosting and data transfer out. An attacker can hotlink your content hosted on S3 on another page to avoid paying the S3 bills
+s3,Etags include the MD5 of the file but not consistently and can be used by developers to verify the integrity of a file. An attacker can affect an upload function to change the etag of a file to disrupt a workflow downstream.
+gcs,Theft of Google Cloud Platform login credentials or access tokens
+gcs,Guessing of Google Cloud Platform credentials
+gcs,Unauthenticated access to Google Cloud Storage bucket
+gcs,Authenticated access to Google Cloud Storage bucket
+gcs,Deletion or Modification of data stored in Google Cloud Storage bucket
+gcs,Writing malicious content to the Google Cloud Storage bucket
+gcs,Exfiltration of data stored in Google Cloud Storage bucket
+gcs,Exploitable vulnerability in external service
+gcs,Exploitable vulnerability in the application code running on Google Cloud Platform services
+gcs,Exploitable vulnerability in Google Cloud Platform services
+gcs,Logs do not contain sufficient data
+gcs,Deletion of Logs
+gcs,Access to log data in Google Cloud Platform
+gcs,Google Cloud Storage bucket become unavailable
+gcs,Google personnel accessing Cloud Storage bucket
+IoT_Auth,"The web application may be spoofed by an attacker and this may lead to unauthorized access to the browser client. (When discussed with the design team, it appears that this is not possible, as a security mechanism to identify the server is present.)"
+IoT_Auth,SQL injection is an attack in which malicious code is inserted into strings that are later passed to an instance of SQL Server for parsing and execution.
+IoT_Auth,"The SQL Database claims that it didnot write data received from an entity on the other side of the trust boundary. Consider using logging or auditing to record the source, time and a summary of the received data."
+IoT_Auth,"Data flowing across saved feedback comments may be sniffed by an attacker. Depending on what type of data an attacker can read, it may be used to attack other parts of the system or simply be a disclosure of information leading to compliance violations. Consider encrypting the data flow."
+IoT_Auth,"The browser client crashes, halts, stops orruns slowly; in all cases violating an availability metric"
+IoT_Auth,The browser client may be able to impersonate the context of the web application in order to gain additional privilege.
+IoT_Auth,"The SQL Database may be spoofed by an attacker, and this may lead to data being written to the attacker's target instead of the SQL Database. (When discussed with the design team, it appears that this is not possible, as SQL connection is made using the database username and password.) LDAP injection is possible, as the user authentication is verified using an LDAP query. The web application claims that it did not receive data from a process on the other side of the trust boundary. Consider using logging or auditing to record the source, time and a summary of the received data. Improper data protection of LDAP can allow an attacker to read information not intended for disclosure. Review authorization settings. An external agent prevents access to a data store on the other side of the trust boundary An attacker may pass data into the browser client in order to change the flow of program execution within the browser client to the attacker's choosing.  Data flowing across saved feedback comments may be tampered with by an attacker. Failure to verify that input is as expected is a root cause of a very large number of exploitable issues. Consider all paths and the way they handle data. Verify that all input is verified for correctness using an approved-list input validation approach.  LDAP claims that it did not write data received from an entity on the other side of the trust boundary. Consider using logging or auditing to record the source, time and a summary of the received data. LDAP claims that it did not write data received from an entity on the other side of the trust boundary. Consider using logging or auditing to record the source, time and a summary of the received data."
+IoT_Auth,"LDAP injection is possible, as the user authentication is verified using an LDAP query."
+IoT_Auth,"The web application claims that it did not receive data from a process on the other side of the trust boundary. Consider using logging or auditing to record the source, time and a summary of the received data."
+IoT_Auth,"The web application claims that it did not receive data from a process on the other side of the trust boundary. Consider using logging or auditing to record the source, time and a summary of the received data."
+IoT_Auth,An external agent prevents access to a data store on the other side of the trust boundary.
+IoT_Auth,An attacker may pass data into the browser client in order to change the flow of program execution within the browser client to the attacker's choosing.
+IoT_Auth,Data flowing across saved feedback comments may be tampered with by an attacker. Failure to verify that input is as expected is a root cause of a very large number of exploitable issues. Consider all paths and the way they handle data. Verify that all input is verified for correctness using an approved-list input validation approach.
+IoT_Auth,"LDAP claims that it did not write data received from an entity on the other side of the trust boundary. Consider using logging or auditing to record the source, time and a summary of the received data."
+ssl,Trust path validation bugs
+ssl,NULL-byte certificates
+ssl,Leaked CA Certificates
+ssl,Rogue CA Certificates
+ssl,Rogue Sysadmin
+ssl,Server Compromise
+ssl,Backup Compromise
+ssl,Attacks against sysadmins
+ssl,Social engineering
+ssl,Validation software subversion
+ssl,Forgery
+ssl,Bribery
+ssl,Failure to enforce SSL
+ssl,Expired certificate
+ssl,Incorrectly configured chain
+ssl,Invalid hostname
+ssl,Not valid for all required hostnames
+ssl,Insufficient assurance (*)
+ssl,Self-signed certificates
+ssl,Unprotected Private Key
+ssl,Private Key Duplication (*)
+ssl,Private key reuse
+ssl,Lack of trust validation
+ssl,Validation against other root certs
+ssl,Lack of revocation checking
+ssl,Use of weak protocols
+ssl,Weak key exchange (*)
+ssl,Weak ciphers (*)
+ssl,Non-FIPS approved ciphers (*)
+ssl,Anonymous key exchange
+ssl,Use of unpatched SSL libraries
+ssl,Mixed SSL/Non-SSL Areas
+ssl,Insecure cookies
+ssl,User Interface (Usability)
+ssl,Client Configuration
+ssl,Secure implementation
+ssl,Lack of revocation checking
+ssl,No IP layer protection
+ssl,Not end-to-end
+ssl,No certificate information protection
+ssl,Hostname leakage (via SNI)
+ssl,Downgrade attack (SSLv2)
+ssl,Truncation attack (SSLv2)
+ssl,Bleichenbacher adaptive chosen-ciphertext attack
+ssl,Klima-Pokorny-Rosa adaptive chosen-ciphertext attack
+ssl,Implementation bugs
+ssl,Usability issues
+ssl,Prevalence of self-signed certificates
+ssl,Internationalised domain names
+ssl,Similar domain names
+ssl,DNS Cache Poisoning
+ssl,MITM LAN
+ssl,MITM Wireless
+ssl,Route hijacking (BGP)
+ssl,Phishing
+ssl,Corporate interception
+ssl,XSS (Cross-Site Scripting)
+PCI DSS,Interrupt: Firewall rulesets go out of date
+PCI DSS,Timer: Old data not deleted/not deleted securely
+PCI DSS,Timer: Malware might be published for new systems
+PCI DSS,Timer: Anti-malware sw goes out of date
+PCI DSS,Approval: Firewall config fails to prevent
+PCI DSS,Approval: Anti-virus fails to protect
+PCI DSS,Tracking & documentation: Approval process failures (network connections)
+PCI DSS,Tracking & documentation: Approval process failures (firewall)
+PCI DSS,Tracking & documentation: No network diagram
+PCI DSS,Tracking & documentation: Network diagram is not current
+PCI DSS,Tracking & documentation: Change not well managed
+PCI DSS,Tracking & documentation: Changes not tracked
+PCI DSS,Tracking & documentation: Firewall arbitrary changes
+PCI DSS,Tracking & documentation: Systems dropped from management scope
+PCI DSS,Tracking & documentation: Policy/activity drift
+PCI DSS,Tracking & documentation: People with crypto keys might not understand their roles
+PCI DSS,Tracking & documentation: Policies and procedures ignored
+PCI DSS,Deployment: Unmanaged change
+PCI DSS,Deployment: Default passwords
+PCI DSS,Deployment: Default wireless configs
+PCI DSS,Deployment: Malware might be on systems
+PCI DSS,Configuration: Configuration errors lead to insecurity
+PCI DSS,Configuration: Unneeded services lead to insecurity
+PCI DSS,Configuration: Keys overly exposed
+PCI DSS,Standards & Policies: Products ship insecure by default
+PCI DSS,Standards & Policies: Insecurity leads to horizontal movement
+PCI DSS,Standards & Policies: Unneeded services lead to insecurity
+PCI DSS,Standards & Policies: Unencrypted comms lead to network problems
+PCI DSS,Standards & Policies: Insecurity leads to horizontal movement at hosting provider
+PCI DSS,Standards & Policies: Data is kept too long
+PCI DSS,Standards & Policies: Crypto keys are bad
+PCI DSS,Standards & Policies: Crypto keys are disclosed after generation
+PCI DSS,Standards & Policies: Crypto keys are used after disclosure
+PCI DSS,Standards & Policies: Compromised keys can’t be replaced
+PCI DSS,"Standards & Policies: People might see the crypto keys, remember them, and abuse them"
+PCI DSS,Standards & Policies: Crypto keys might be substituted by attackers
+PCI DSS,Standards & Policies: PANs might be sent via unencrypted channels
+PCI DSS,"Standards & Policies: People might not realize that PANs are sensitive, and send them without encryption"
+PCI DSS,Standards & Policies: People might not realize malware is a threat
+PCI DSS,Wireless network & data flows: Eavesdropping
+PCI DSS,Processing: Full PAN displayed
+PCI DSS,Storage: Authentication data stored
+PCI DSS,Storage: Full track data stored
+PCI DSS,Storage: Card verification code/values stored
+PCI DSS,Storage: PIN block/encrypted PIN block stored
+PCI DSS,Storage: PAN disclosed
+PCI DSS,Storage: Account access allows file access
+PCI DSS,Storage: Crypto keys stored securely
+PCI DSS,Processing to DMZ : Eavesdropping
+PCI DSS,DMZ to Acquirer: Eavesdropping
+PCI DSS,Enterprise network: Eavesdropping
+PCI DSS,Employee/Mobile systems: Users change their devices
+PCI DSS,Employee/Mobile systems: Software is not running
+PCI DSS,Mgmt console to CDE: Info disclosure
+PCI DSS,Mgmt console to CDE: Keys disclosed after generation
+PCI DSS,Logs: PAN stored in logs
+CT,Errors or social engineering leading to unintended issuance.
+CT,"Technical attacks (e.g., CA compromise)."
+CT,Intentional issuance of bogus certificates.
+CT,Collusion with logs to hide mis-issuance.
+CT,Delayed or refused revocation of bogus certificates.
+CT,Malicious CAs issuing syntactically incorrect certificates intentionally.
+CT,Suppressing log entries for bogus certificates.
+CT,Providing inconsistent views (split-view attacks).
+CT,Generating fake log entries to mislead monitors.
+CT,Issuing SCTs without logging certificates.
+CT,Selectively hiding entries from monitors.
+CT,Failing to report bogus certificates.
+CT,Issuing false warnings to disrupt legitimate certificates.
+CT,Subjects unaware of new logs or unable to track all logs.
+CT,A malicious CA obtains multiple CA certificates from different parents.
+CT,Submits one chain to logs for SCTs but presents a different chain to targeted browsers.
+CT,Evades revocation by hiding one chain from detection.
+CT,"Providing false ""good"" OCSP responses to targeted browsers."
+CT,Manipulating CRL distribution points to hide revocation.
+CT,Controlling AIA extensions to direct browsers to attacker-controlled OCSP servers.
+CT,Issues bogus certificates without detection.
+CT,Delays revocation or provides inconsistent revocation status.
+CT,Issues SCTs without logging certificates.
+CT,Presents split views to hide misbehavior.
+CT,Browsers checking logs directly may expose visited websites to logs.
+CT,Monitors or logs leaking sensitive certificate information.
+CT,Browsers not enforcing SCT checks.
+CT,Lack of standardized mechanisms for gossiping or log auditing.
+CT,Difficulty in revoking certificates issued by malicious CAs without collateral damage.
+CT,No standard way for monitors to communicate mis-issuance to browsers.
+K8S,Exploit Public-Facing Application
+K8S,External Remote Services
+K8S,Valid Accounts
+K8S,Container Administration Command
+K8S,Deploy Container
+K8S,Scheduled Task/Job
+K8S,User Execution
+K8S,External Remote Services
+K8S,Implant Internal Image
+K8S,Scheduled Task/Job
+K8S,Valid Accounts
+K8S,Escape to Host
+K8S,Exploitation for Privilege Escalation
+K8S,Scheduled Task/Job
+K8S,Valid Accounts
+K8S,Build Image on Host
+K8S,Deploy Container
+K8S,Impair Defenses
+K8S,Indicator Removal
+K8S,Masquerading
+K8S,Use Alternate Authentication Material
+K8S,Valid Accounts
+K8S,Brute Force
+K8S,Steal Application Access Token
+K8S,Unsecured Credentials
+K8S,Container and Resource Discovery
+K8S,Network Service Discovery
+K8S,Permission Groups Discovery
+K8S,Use Alternate Authentication Material
+K8S,Endpoint Denial of Service
+K8S,Network Denial of Service
+K8S,Resource Hijacking
+CI/CD,"Supply Chain Attacks to Application Library, Tools, Container Images in CI/CD Pipelines."
+CI/CD,"Use developer’s credentials to access to Git Repository Service \ (Personal token, SSH key, browser cookie, or login password is stolen)"
+CI/CD,Use SSH key or Tokens to access to CI/CD Service Servers directly
+CI/CD,"Use SSH key, Tokens to access to Server hosting Git Repository"
+CI/CD,Modify CI/CD Configuration on Git Repository
+CI/CD,"For example, Terraform allows code execution and file inclusion. The code is executed during CI(plan stage). Code Execution: Provider installation(put provider binary with .tf), Use External provider. File inclusion: file Function"
+CI/CD,Inject code to source code. Application executes test code during CI
+CI/CD,Inject bad dependency
+CI/CD,Connect to CI/CD pipeline servers via SSH or Valid Token
+CI/CD,Modify the configuration of Production environment via stolen credentials
+CI/CD,"Deploy modified applications or server images (e.g. container image, function, VM image) to production environment via stolen credentials"
+CI/CD,Compromise CI/CD Server from pipeline
+CI/CD,Implant container images for CI/CD with malicious code to establish persistence
+CI/CD,Get high privilege credential in CI stage (not CD)
+CI/CD,Privilege Escalation from CI/CD Environment to other components
+CI/CD,Change Approver using Git Repository Service Admin permission
+CI/CD,Bypass Peer Review of Git Repository
+CI/CD,Use a CI/CD system in a different repository to leverage stolen credentials to access secret manager
+CI/CD,Implant bad code to caches of CI/CD pipeline
+CI/CD,Dump Environment Variables in CI/CD
+CI/CD,Access to Cloud Metadata to get access token of Cloud resources
+CI/CD,Read credentials file mounted in CI/CD pipeline
+CI/CD,Get credential from CI/CD Admin Console
+CI/CD,Exploit services from CI/CD Pipeline
+CI/CD,"In monorepo architecture of Git Repository, there are many approvers. Need to set access controls carefully"
+CI/CD,Exfiltrate data in Production environment via stolen credentials
+CI/CD,Exfiltrate data from Git Repositories
+CI/CD,Denial of Services of CI/CD pipeline
+ecs,AWS account: Weak password
+ecs,Phishing email: MFA
+ecs,Over granted privileges: IAM permission boundary & SCPs
+ecs,Fargate Container: Vulnerable application code
+ecs,Weak Auth: SAST in CI
+ecs,Weak communication encryption: App Mesh
+ecs,Tampered image: Private registry authentication
+ecs,S3: Misconfiguration
+ecs,RDS: Misconfiguration
+PSM,Attack amplification via password sync
+PSM,"HTTP login page: Consider a web site that serves its login page over HTTP, but submits the login form over HTTPS. Attacker can easily inject the required JavaScript into the login form at the router and mount all the sweep attacks discussed in the previous section"
+PSM,HTTP login page: SSLstrip attacks
+PSM,"Embedded devices: Many embedded devices serve their login pages over HTTP by default because the channel is assumed to be protected by a WiFi encryption protocol such as WPA2. By injecting JavaScript into the HTTP login page as above, an attacker can extract passwords for embedded devices and corporate servers that the user has previously interacted with."
+PSM,"Embedded devices: An attacker can purchase a valid certificate for the same common name as the router’s or generate its own self signed certificate. When the user’s machine connects to the attacker’s network, the attacker can spoof the user’s home router by presenting a valid certificate for the router’s web site. This allows the attacker to mount the sweep attack and extract the user’s home router password."
+PSM,"Broken HTTPS: Consider a public site whose login page is served over HTTPS. This can be exploited in our redirect sweep attack: when the browser is redirected to the victim site, the attacker serves the modified login page using a self signed certificate for that site."
+PSM,"Active Mixed Content: Any HTTPS webpage containing active content (e.g., scripts) that is fetched over HTTP is also a potential vector.  For example, embedding a Shockwave Flash (SWF) file over HTTP if not blocked correctly can be used by a network attacker to inject arbitrary scripts."
+PSM,XSS Injection: A cross-site scripting vulnerability in a page allows the attacker to inject JavaScript to modify the page as needed.
+PSM,Leftover Passwords: An attacker could spoof the old site to steal the leftover password.
+PSM,"Password Exfiltration: Once the password manager has autofilled the login form, the attacker must be able to access the filled-in credentials and send them to a server under its control. We briefly describe two methods for accomplishing this."
+PSM,"Password Exfiltration (Stealth): Using stealth exfiltration, the attacker waits until the login form is populated with the user’s credentials automatically by a password manager, then steals the password by loading an attacker controlled page in an invisible iFrame and passing the credentials as parameters"
+PSM,"Password Exfiltration (Action): An HTML form’s “action” is the URL to which the form’s data will be submitted. The attacker can modify a login form’s action attribute so that it submits to an attacker-controlled site, thereby leaking the user’s credentials to the attacker"
+PSM,"Attacks that need user interaction: If the user’s password manager requires user input to fill passwords and an attacker can trick the user to interact with the login form without them realizing it, the same exfiltration techniques can be used to steal the password as soon as the password form is filled."
+PSM,Clickjacking: The attacker presents the user with a benign form seemingly unrelated to the target site
+IoT_sc,Sabotage: The assembly pipeline may provide malicious actors with the opportunity to interfere and inject defects that may end up causing problems (up to the total shutdown and malfunction of the product) in later stages.
+IoT_sc,"Grey markets: Defective, discarded or lost products may end up in grey markets that exist outside of the proper distribution channels."
+IoT_sc,Exploitation of inadequate physical enclosures: Some devices require to be physically tamper-proof depending on the scenario. The choice of materials and construction method must be adequate for the intended use of the product.
+IoT_sc,"IP theft: Malicious actors may be able to illegally acquire, exploit, store or redistribute intellectual property and sensitive pieces of information (e.g. design documents, source code, credentials or other secrets)."
+IoT_sc,"Reverse engineering: The consequences of reverse engineering are arguably similar to those of IP theft; the main difference resides in the method used to obtain the sensitive assets and pieces of information (e.g. source code from the binaries, deep understanding of hardware blocks)."
+IoT_sc,"Overproduction and cloning: Overproducing is the practice of fabricating a product whose design documents and specifications have been provided willingly by the rightful owner, with the particularity that this is done outside of the established bounds of a legal contract."
+IoT_sc,Magnetic field attacks: Devices that are deployed in the field may be exposed to magnetic field attacks.
+IoT_sc,Malware insertion: Attackers are presented with the opportunity to insert malicious software whose main objective is to provide illicit access or any other functionality that goes against the intended usage of the system.
+IoT_sc,"Exploitation of debug interfaces: Debugging IoT devices without compromising confidentiality, integrity and availability is a relevant challenge—there are no standards to incorporate debugging interfaces such as JTAG."
+IoT_sc,"Tampering and counterfeits: Counterfeit products are sold by unauthorized suppliers who are not part of manufacturer's official sales channel. These products, which have been designed and manufactured by unknown parties, are labeled as the manufacturer’s products."
+IoT_sc,Implications due to standard and regulation non-compliance: Architecting processes around privacy/encryption is a challenge that is affected by existing privacy laws and regulations and by the fact that some actors in the supply chain ecosystem have their own different understanding about the security aspects.
+IoT_sc,Compromise of Network: Systems that are necessary for the control of supply chain processes and exist in a network could become compromised without the proper QoS or firewall policies.
+IoT_sc,Use of factory authentication settings: Devices which require authentication should never leave the factory with a fixed global default credentials or a credentials derived from easily obtainable information (i.e. MAC address).
+IoT_sc,Undetected software or hardware disruptions of the devices: Systems related in any fashion to the operation of the supply chain should ideally be extensively monitored for an early detection of hardware of software issues.
+IoT_sc,"User Errors: Users should be properly informed and trained to raise awareness about the functionality and the security risks; whether in the case of internal members of an organization operating critical supply chain systems and tools, or end users whose compromised devices could be used to gain access to other nodes that could disrupt the supply chain."
+IoT_sc,Technological evolution during device life cycle: The technological landscape is constantly evolving. This evolution can result in unexpected vulnerabilities that were not present during the design and implementation stages; this is especially impactful in the case of devices with long life cycles (e.g. cars).
+IoT_sc,Use of unpatched devices and systems: It is a common occurrence to discover vulnerabilities during the device life cycle that were not considered in the first stages of the supply chain.
+IoT_sc,Disruptions in cloud services: Systems that depend on cloud services and are critical to the operation of the supply chain should be able to perform their core functionality even when disconnected for extended periods of time.
+IoT_sc,"Failure of recovery procedures: Due to an attack, the system (and the device) is not able to be recovered impacting functionality and security. During the lifecycle of an IoT device, several assets (firmware, configuration, credentials) might need to be updated. Chain of trust must be considered since depending the asset to be updated (impacted), different mechanisms must be used."
+IoT_sc,"Attack to registration procedures: A lack of registration procedures, or insecure registration mechanisms, could lead to attackers registering fraudulent devices or preventing the registration of genuine devices"
+IoT_sc,Use of recovered or repurposed components: Organizations may opt to reuse components or parts that have already gone through the regular supply chain flow; this could be done for reasons such as cost optimization.
+IoT_sc,Attack to manufacturing processes: Manufacturing pipelines are highly sensitive points of entry to the supply chain. Processes that do not implement adequate measures to regulate and monitor the access of personnel to the pipeline could cause serious vulnerabilities; this could in turn lead to other discussed threats such as sabotage or malware injection.
+Trinity,Attacker steals seed by monitoring the Android Clipboard
+Trinity,Attacker steals funds by manipulating receiving address copied to the clipboard.
+Trinity,Changing date/time of the system prevents users from logging in to the application. Application gets stuck at the Loading Screen.
+Trinity,Attacker steals sensitive information using phishing attack
+Trinity,Desktop-only: Attacker Obtains Seeds by monitoring the Volatile Memory during new seed setup
+Conn_Cars,Remotely transmitting and installing malicious firmware and/or apps
+Conn_Cars,Using RF modules to access the head unit via complex exploit chains
+Conn_Cars,Remotely hijacking vehicles via compromised CAN bus
+Conn_Cars,Deleting local files in a compromised connected car’s file system
+Conn_Cars,Installing malware or spyware in a connected car
+Conn_Cars,Spoofing V2X messages being broadcast to the ecosystem
+Conn_Cars,Passively sniffing V2X messages being broadcast to the ecosystem
+Conn_Cars,Sending incorrect or improper commands to back-end ITSs
+Conn_Cars,Sending MItM communications and false data to back-end ITSs
+Conn_Cars,Sniffing network traffic between a connected car and back-end ITSs
+Conn_Cars,Performing an MItM attack with wireless transmission to intercept and modify car data
+Conn_Cars,Dumping firmware to recover credentials and configurations
+Conn_Cars,Installing malicious third-party apps in a connected car’s infotainment system
+Conn_Cars,Installing a malicious app on a connected mobile phone
+Conn_Cars,"Exploiting vulnerabilities in software, hardware, operating systems, and protocols"
+Conn_Cars,Attacking the camera system’s image processing with specially crafted visuals
+Conn_Cars,Identifying and abusing device misconfigurations
+Conn_Cars,"Conducting social engineering attacks such as creating fake RDS-TMC messages, phishing, and map poisoning"
+Conn_Cars,Credential brute-forcing and abusing weak authentication methods
+Conn_Cars,Injecting malicious scripts via malvertising
+Conn_Cars,"Performing traditional attacks such as SQL injection, cross-site scripting (XSS), session hijacking, and DNS spoofing"
+Conn_Cars,Pivoting a connected car as a trusted entry point to the V2X network
+Conn_Cars,Compromising a third-party software supply chain to push malicious updates
+Conn_Cars,Scanning the V2X network from a connected car to discover topology and nodes
+Conn_Cars,"Electronically jamming a connected car’s safety systems, such as radar and lidar"
+Conn_Cars,Electronically jamming wireless transmissions to disrupt operations
+Conn_Cars,Discovering and abusing vulnerable remote systems using Shodan
+Conn_Cars,Launching distributed denial-of-service (DDoS) attacks using a compromised ITS infrastructure
+Conn_Cars,Launching DDoS attacks on an ITS infrastructure so that it fails to respond to requests
+email_encryption,Web Interface: Auth Bypass
+email_encryption,Web Interface: Permissions Bypass
+email_encryption,Web Interface: Tomcat Vulns
+email_encryption,Web Interface: XSS
+email_encryption,Web Interface: CSRF
+email_encryption,Web Interface: Web Vulns
+email_encryption,Web Interface: SQL Injection
+email_encryption,Web Interface: Log Injection Leading to XSS
+email_encryption,Web Interface: Spring Vulns
+email_encryption,Web Interface: MitM (Man-in-the-Middle)
+email_encryption,Web Interface: ClickJack
+email_encryption,SSH/Local Console: Auth Bypass
+email_encryption,SSH/Local Console: OS Command Exec
+email_encryption,SSH/Local Console: Shell
+email_encryption,SSH/Local Console: OS Priv Esq
+email_encryption,SSH/Local Console: MitM
+email_encryption,SSH/Local Console: Default Credentials
+email_encryption,Web Interface: OS Priv Esq
+email_encryption,Web Interface: Default Credentials
+email_encryption,Main Daemon: Malformed PDFs
+email_encryption,Main Daemon: Malformed Certificates
+email_encryption,Main Daemon: Key Material Storage
+email_encryption,Main Daemon: OS Interaction/Command Injection
+email_encryption,Main Daemon: Log Injection
+email_encryption,Main Daemon: SQL Injection
+email_encryption,Main Daemon: Command Execution
+email_encryption,Main Daemon: IPC / RPC Interface Attack Surface
+email_encryption,Main Daemon: Password Storage
+email_encryption,Main Daemon: OTP Password Generation
+email_encryption,Mail Transfer Agent: Memory Corruption
+email_encryption,Mail Transfer Agent: Mail Relay
+email_encryption,Mail Transfer Agent: Log Injection
+email_encryption,Mail Transfer Agent: OS Command Injection
+bitcoin,An attacker could steal a users private keys to steal their bitcoin.
+bitcoin,An attacker could use a quantum computer to guess everyone's private keys.
+bitcoin,An attacker could broadcast a fake transaction to the network in order to steal bitcoins.
+bitcoin,An attacker could broadcast a large number of transactions that pay himself in order to clog the network.
+bitcoin,An attacker could identify the participants in transactions through network traffic analysis
+bitcoin,An attacker could identify the participants in a transaction through public transaction data.
+bitcoin,An attacker could run mining software in order to prevent transactions from being confirmed.
+bitcoin,An attacker could run mining software in order to double spend bitcoins.
+bitcoin,An attacker could exploit a flaw in the proof of work algorithm to fake the performance of work.
+bitcoin,An attacker could steal all of the hardware used to confirm Bitcoin transactions.
+bitcoin,An attacker could claim to be Satoshi and remove a safety feature from the next version of Bitcoin.
+bitcoin,An attacker could remove a safety feature from the next version of Bitcoin to enable a new capability.
+bitcoin,An attacker could create a copy of Bitcoin (aka fork) that is missing a safety feature and trick people into using it.
+bitcoin,An attacker could create a variety of implementations of Bitcoin in order to add a security flaw.
+bitcoin,An attacker could create an insecure second layer network on top of Bitcoin.
+bitcoin,An attacker could create a less secure digital asset and trick people into buying it.
+bitcoin,An attacker could create a more secure digital asset so that investors will abandon Bitcoin.
+bitcoin,An attacker could mine invalid Bitcoin blocks to remove a safety feature from Bitcoin
+bitcoin,An attacker could deceive a Bitcoin node into thinking a transaction did or did not get confirmed.
+bitcoin,An attacker could deceive a Bitcoin partial node (SPV client) into thinking a transaction did or did not get confirmed by the Bitcoin network.
+bitcoin,An attacker could introduce security flaws into Bitcoin mining hardware in order to break the security of Bitcoin.
+bitcoin,An attacker could threaten to harm an individual or group mining bitcoin.
+bitcoin,An attacker could threaten to harm node individual or group running a Bitcoin node
+bitcoin,An attacker could extort the private keys from an investor.
+bitcoin,An attacker could deceive investors regarding the utility of Bitcoin.
+bitcoin,An attacker could threaten to harm Bitcoin investors if they don't sell or hand over their bitcoin.
+bitcoin,An attacker could threaten to harm anyone that attempts to buy or sell bitcoin.
+bitcoin,An attacker could threaten to harm anyone accepting bitcoin as payment.
+bitcoin,An attacker could threaten to harm anyone contributing to Bitcoin software.
+bitcoin,An attacker could bribe or extort a Bitcoin developer into introducing a security flaw into Bitcoin.
+bitcoin,An attacker could threaten to harm Bitcoin mining hardware manufacturers if they sell to the public.
+containers,Compromising Secrets: Parameters
+containers,Compromising Secrets: Public Access
+containers,Network: Access other containers
+containers,Network: Public ports
+containers,DoS: Network
+containers,DoS: Filesystem
+containers,DoS: RAM
+containers,DoS: CPU
+containers,Poisoned Images: Infected App.
+containers,Poisoned Images: Infected Images
+containers,Poisoned Images: Outdated Images
+containers,Container Outbreak: Processess as Root
+containers,Container Outbreak: Usage of SETUID/SETGID
+containers,Kernel Exploits
+containers,Insecure Host
+containers,Misconfiguration container
+containers,Vulnerable application
+containers,Supply chain attacks
+containers,Expose secrets
+containers,Insecure networking
+containers,Integrity and confidentiality of OS images
+containers,Container escape vulnerabilities
+AMPS,Patient facing web server compromised
+AMPS,Attacker leverages webserver trust relationships and/or access credentials to scrape patient medical database
+AMPS,Attacker leverages webserver trust relationships and/or access credentials to retrieve partial payment information
+AMPS,Attacker defaces website
+AMPS,Attacker can move laterally in the infrastructure services network to compromise database server
+AMPS,Attacker encrypts compromised systems
+AMPS,Attacker compromises payment processing services
+AMPS,Attacker installs a backdoor for long term access
+AMPS,Payment information is stolen by attackers
+AMPS,Attacker sniffs payment information as it is being submitted to the database
+AMPS,Attacker has access to unencrypted payment database
+AMPS,Attacker gains trusted access to payment database
+AMPS,Attacker moves laterally to server containing payment database
+AMPS,Attacker has physical access to database server
+AMPS,Attacker has access to unencrypted payment database backups
+AMPS,Attacker has a network connection to the payment database service
+AMPS,Attacker has database administrative credentials
+AMPS,Attacker has access to encrypted payment database
+AMPS,Attacker has access to decryption keys
+CTA,"Placing a modified version of the application in Google Play / Apple Store, one that was not built from the official source code or a compliant one with hidden malicious functionalities (for example collecting excessive data, user tracking). On purpose or by hijacking administrative accounts."
+CTA,Affecting reviews of the application in Google Play / Apple Store. Negative comments spreading fake news or privacy concerns.
+CTA,"Discovering a vulnerability with low or no risk impact, which will be considered as critical by media (bad PR)"
+CTA,Publishing fake news (e.g. critical vulnerabilities affecting privacy)
+CTA,Privilege access compromise - by exploiting infrastructure or workstations of the developers or administrators who manage the application and its infrastructure - this may include attacks on the company who develops the application or parts of the application for the controlling entity. 
+CTA,User uninstalling the application due to UX or functional bugs - introduced on-purpose or unwittingly by the developer. For example: it consumes a lot of power or does not estimate signal strength properly
+CTA,"Sensitive data leak - by discovering vulnerabilities in the API or infrastructure, for example access control bypass or remote code execution."
+CTA,Making the API or infrastructure unavailable (Denial of Service attacks)
+CTA,Affecting data integrity and statistics - by discovering vulnerabilities in the API or infrastructure
+CTA,Intercepting data between the controlling entity server and applications - manipulation of that data - Man-in-The-Middle attacks.
+CTA,Sensitive data leak from the application to other applications installed on the phone (mobile malware scenario)
+CTA,Sensitive data leak from the application outside the phone (for example a malicious Bluetooth packet will result in leaking PII or generation keys)
+CTA,Sensitive data leak from the application to third parties (data or crash analytics)
+CTA,Compromising a third-party developing a Java / Swift / Javascript library used in the app - modification of the library and stealing sensitive data or changing infection data asd
+CTA,De-anonymisation of collected data - matching UIDs with phone numbers and other data sources such as telecommunication providers (source IPs)
+CTA,Using collected data against its intended use (for example: did citizen A meet citizen B and where)
+CTA,Faking status display - showing “green” when the user is infected (“red status”).
+CTA,Faking status change (self) - marking controlled accounts as infected without confirmation from the controlling entity.
+CTA,Abusing status change (other users) - marking other users as potentially infected on purpose (for example: collect UIDs from isolation ward and broadcast in the shopping mall)
+CTA,Blocking status change - blocking incoming infection notification - to avoid getting “red status”
+CTA,Avoiding infection report - Infected users avoid marking themselves as infected in the app.
+CTA,Abusing broadcast - Marking other users as potentially infected on purpose (for example: collect UIDs from isolation ward and broadcast in the shopping mall)
+CTA,Abusing UIDs save - Making collected data useless: jamming Bluetooth signals or broadcasting a lot of fake UIDs
+CTA,Abusing broadcast / UIDs save - Disruption of the data quality - by a network of fake accounts and/or fake contacts or infections
+CTA,Disrupting data integrity and quality - for example an attack leading to multiple users having the same UIDs - low randomness of UIDs (on-purpose or not)
+CTA,Abusing privacy - Making a certain user receive a set of known UIDs to track their movement.
+CTA,Phishing - Changing the notification text of a status change (for example “click here: [malicious link]”)
+CTA,Retrieving data locally - stealing someone’s phone and correlating tracking information to reveal their location history
+CTA,Abusing privacy - Matching UIDs with user photos - for example mass scanning of Bluetooth signal and making photos of all pedestrians
+CTA,"Abusing privacy - Fingerprinting phone device to match it with UIDs, for example MAC address of Bluetooth interface"
+CTA,"Social campaign aiming to jam or fake Bluetooth broadcast - malicious application collecting UIDs and broadcasting them in different places; small devices (RaspberryPi, Arduino) placed in shops, parks; jamming"
+vehicle_charging,Power is stolen or incorrectly billed: Intercepting and tampering with EVCC­to­SECC data flows using a modified charging cable
+vehicle_charging,Power is stolen or incorrectly billed: Intercepting and tampering with EVCC­to­SECC data flows by Inserting a false SECC that intercepts and proxies messages
+vehicle_charging,Power is stolen or incorrectly billed: Intercepting and tampering with EVCC­to­SECC data flows using a software­defined radio to intercept and inject messages
+vehicle_charging,Power is stolen or incorrectly billed: Clone or replay identification/payment token.
+vehicle_charging,"Power is stolen or incorrectly billed: Spoof the EVCC, for example by substituting the EVCC from a wrecked"
+vehicle_charging,An actor tampers with the tariff schedule: Intercept and tamper with the EVCC­to­SECC data flow
+vehicle_charging,An actor tampers with the tariff schedule: Intercept and tamper with EVSE­to­CSO data flow or spoof the CSO
+vehicle_charging,"An actor tampers with the tariff schedule: Tamper with charger firmware, storage, or memory, targeting cached schedules"
+vehicle_charging,An actor repudiates power transfers: Tamper with logs in the charger’s memory or storage
+vehicle_charging,An actor repudiates power transfers: Tamper with the meter or meter­charger data flow
+vehicle_charging,"An actor repudiates power transfers: Intercept charger­to­CSO data flows, tampering with transaction details"
+vehicle_charging,"An actor repudiates power transfers: Tamper with EVCC­to­SECC data flows, disabling metering receipts"
+vehicle_charging,"An actor repudiates power transfers: Spoof the EVCC, SECC, or both to manipulate and obscure transaction details"
+vehicle_charging,"An actor repudiates power transfers: Tamper with human­machine interface, accessing privileged functions"
+vehicle_charging,"An actor denies charging: Tampers with the BMS firmware, configuration, or memory"
+vehicle_charging,An actor denies charging: Tampers with the EVCC­to­SECC data flow (Induce false charging state or settings)
+vehicle_charging,An actor denies charging: Tampers with the EVCC­to­SECC data flow (Impersonate charger and transmit false power measurements.)
+vehicle_charging,An actor denies charging: Physically tamper with power electronics
+vehicle_charging,"An actor administratively opens breaker: Compromises privileged CSO, charger vendor, or similar account via phishing."
+vehicle_charging,"An actor administratively opens breaker: Tampers with human­machine interface or controller storage, memory, or firmware"
+vehicle_charging,An actor administratively opens breaker: Spoofs the CSO or tampers with charger­to­CSO data flows.
+vehicle_charging,"An actor steals accounts: Compromises charging application user­level accounts, commands charging halt."
+vehicle_charging,"An actor steals accounts: Compromises developer account to insert malicious functions into smartphone apps, firmware, or related vector."
+vehicle_charging,"An actor steals accounts: Compromises CSO, charging station equipment vendor, or breaker privilege account to update equipment with improper settings or firmware, or invokes immediate stop charge function"
+vehicle_charging,An actor tampers with EV electronic control units: Compromised telematic control unit provides vector to tamper with BMS or other electronic control unit
+vehicle_charging,An actor tampers with EV electronic control units: EVCC commands incorrect voltage or current setpoints.
+vehicle_charging,An actor tampers with EV electronic control units: Modified electronic control unit firmware at supply chain source
+vehicle_charging,"An actor alters the charger behaviour or state: Tampers with controller firmware, storage, or memory."
+vehicle_charging,An actor alters the charger behaviour or state: Accesses privileged interface to alter setpoints.
+vehicle_charging,An actor coordinates the disruption of the charging processes: Denial-­of-­service attack against the CSO or charger­to­CSO data flow
+vehicle_charging,"An actor coordinates the disruption of the charging processes:  Denies trust store update, certificate revocation list update, or time synchronisation"
+vehicle_charging,An actor tampers with power delivery: Compromised developer or admin account pushes invalid configuration.
+vehicle_charging,An actor tampers with power delivery: Compromises EVSE’s system shell and disrupts communication among EVSE power electronic modules
+vehicle_charging,"An actor tampers with power delivery: Tampering with charger’s memory, storage, and firmware or compromising system shell to modify configuration parameters or code."
+vehicle_charging,An actor tampers with power delivery: Tampering with chargers to introduce electrical conditions (e.g. electrical shorts).
+vehicle_charging,An actor interferes with the SECC: Denies or intercepts and tampers with the EVCC­SECC or the charger­CSP dataflows
+vehicle_charging,An actor interferes with the SECC: Spoofs the charger or the CSP
+vehicle_charging,An actor interferes with the SECC: Denies CSP certificate revocation distribution or secure time synchronisation
+vehicle_charging,"An actor compromises EV function: Compromised charger tampers with the EVCC, BMS, or other electronic control units (Overdischarging batteries, for example by modulating headlights)"
+vehicle_charging,"An actor compromises EV function: Compromised charger tampers with the EVCC, BMS, or other electronic control units (Overcharging batteries by altering BMS controller setpoints.)"
+vehicle_charging,"An actor compromises EV function: Compromised charger tampers with the EVCC, BMS, or other electronic control units (Disrupting thermal management and overheating of battery packs.)"
+vehicle_charging,"An actor compromises EV function: Tampers with the EVCC­SECC data flow, specifying values that exceed limits."
+vehicle_charging,An actor tampers with the charger: Tampered cooling controller causes customer to burn hand when touching connector or cabling.
+vehicle_charging,"An actor tampers with the charger: Tampered circuit contactor is welded closed, causing electric shock"
+vehicle_charging,An actor repurposes CSP or charger computing and network resources: Tampering with the charger or related systems to mine cryptocurrency.
+vehicle_charging,An actor repurposes CSP or charger computing and network resources: Exploiting CSP or CSO systems to execute distributed denial of service attacks.
+vehicle_charging,"An actor illicitly accesses business­competitive information, such as customer data: Tampers with CSO database using charging station field network access."
+vehicle_charging,"An actor illicitly accesses business­competitive information, such as customer data: EV vulnerabilities or misconfigurations allow remote access to driver/vehicle information."
+agentic_ai,"Memory Poisoning: Memory Poisoning involves exploiting an AI's memory systems, both short and long-term, to introduce malicious or false data and exploit the agent’s context."
+agentic_ai,"Tool Misuse: Tool Misuse occurs when attackers manipulate AI agents to abuse their integrated tools through deceptive prompts or commands, operating within authorized permissions"
+agentic_ai,"Agent Hijacking: where an AI agent ingests adversarial manipulated data and subsequently executes unintended actions, potentially triggering malicious tool interactions."
+agentic_ai,Privilege Compromise:Privilege Compromise arises when attackers exploit weaknesses in permission management to perform unauthorized actions. This often involves dynamic role inheritance or misconfigurations.
+agentic_ai,"Resource Overload: Resource Overload targets the computational, memory, and service capacities of AI systems to degrade performance or cause failures, exploiting their resource-intensive nature."
+agentic_ai,"Cascading Hallucination Attacks: These attacks exploit an AI's tendency to generate contextually plausible but false information, which can propagate through systems and disrupt decision-making"
+agentic_ai,"Intent Breaking & Goal Manipulation: This threat exploits vulnerabilities in an AI agent's planning and goal-setting capabilities, allowing attackers to manipulate or redirect the agent's objectives and reasoning."
+agentic_ai,Misaligned & Deceptive Behaviors: AI agents executing harmful or disallowed actions by exploiting reasoning and deceptive responses to meet their objectives.
+agentic_ai,Repudiation & Untraceability: Occurs when actions performed by AI agents cannot be traced back or accounted for due to insufficient logging or transparency in decision-making processes.
+agentic_ai,"Identity Spoofing & Impersonation: Attackers exploit authentication mechanisms to impersonate AI agents or human users, enabling them to execute unauthorized actions under false identities"
+agentic_ai,"Overwhelming Human in the Loop: This threat targets systems with human oversight and decision validation, aiming to exploit human cognitive limitations or compromise interaction frameworks."
+agentic_ai,"Unexpected RCE and Code Attacks: Attackers exploit AI-generated execution environments to inject malicious code, trigger unintended system behaviors, or execute unauthorized scripts."
+agentic_ai,"Agent Communication Poisoning: Attackers manipulate communication channels between AI agents to spread false information, disrupt workflows, or influence decision-making."
+agentic_ai,"Rogue Agents in Multi-Agent Systems: Malicious or compromised AI agents operate outside normal monitoring boundaries, executing unauthorized actions or exfiltrating data"
+agentic_ai,"Human Attacks on Multi-Agent Systems: Adversaries exploit inter-agent delegation, trust relationships, and workflow dependencies to escalate privileges or manipulate AI-driven operations."
+agentic_ai,"Human Manipulation: In scenarios where AI agents engage in direct interaction with human users, the trust relationship reduces user skepticism, increasing reliance on the agent's responses and autonomy"
+tf_m,The NS image can be tampered by an attacker
+tf_m,An attacker may replace the current NS image with an older version.
+tf_m,"If SPE doesn’t complete isolation configuration before NSPE starts, NSPE can access secure regions which it is disallowed to."
+tf_m,"If SPE doesn’t complete isolation configuration before NSPE starts, NSPE can control devices or peripherals which it is disallowed to."
+tf_m,"If SPE leaves some SPE information in non-secure memory or shared registers when NSPE starts, NSPE may access those SPE information."
+tf_m,An attacker may block NS to boot up
+tf_m,A malicious NS application may pretend as a secure client to access secure data which NSPE must not directly access.
+tf_m,An attacker in NSPE may tamper the service request input or output vectors between check and use (Time-Of-Check-to-Time-Of-Use (TOCTOU)).
+tf_m,A malicious NS application may request to tamper data belonging to SPE.
+tf_m,A NS application may repudiate that it has requested services from a RoT service.
+tf_m,A malicious NS application may request to read data belonging to SPE.
+tf_m,"A malicious NS application may request to control secure device and peripherals, on which it doesn’t have the permission."
+tf_m,A Malicious NS applications may frequently call secure services to block secure service requests from other NS applications.
+tf_m,A malicious NS application may provide invalid NS memory addresses as the addresses of input and output data in RoT service requests.
+tf_m,An attacker may tamper NS input data while the RoT service is processing those data.
+tf_m,"A malicious NS application may embed secure memory addresses into a structure in RoT service request input vectors, to tamper secure memory which the NS application must not access."
+tf_m,"A malicious NS application can embed secure memory addresses in a parameter structure in RoT service request input vectors, to read secure data which the NS application must not access."
+tf_m,SPE may leave secure data in the registers not banked after the SPE completes PSA Client calls and executes BXNS to switch Armv8-M back to Non-secure state.
+tf_m,Shared registers may contain secure data when NS interrupts occur.
+tf_m,An attacker may trigger spurious NS interrupts frequently to block SPE execution.
+tf_m,Shared registers may contain secure data when Armv8-M core switches back to Non-secure state on Secure interrupt return.
+tf_m,Armv8-M processor Secure software Stack Sealing vulnerability.
+tf_m,Invoking Secure functions from handler mode may cause TF-M IPC model to behave unexpectedly.
+tf_m,Secure data in FP registers may be disclosed to NSPE when VLLDM instruction is abandoned due to an exception mid-way.
+ros_2,An attacker spoofs a component identity.
+ros_2,An attacker intercepts and alters a message.
+ros_2,An attacker writes to a communication channel without authorization.
+ros_2,An attacker listens to a communication channel without authorization.
+ros_2,An attacker prevents a communication channel from being usable
+ros_2,An attacker hijacks robot long-range communication
+ros_2,An attacker intercepts robot long-range communications (e.g. MitM)
+ros_2,An attacker disrupts (e.g. jams) robot long-range communication channels.
+ros_2,An attacker executes arbitrary code using a short-range communication protocol vulnerability.
+ros_2,An attacker gains unauthenticated access to the remote application interface.
+ros_2,An attacker could eavesdrop communications to the RobotE28099s remote application interface.
+ros_2,An attacker could alter data sent to the RobotE28099s remote application interface.
+ros_2,An attacker compromises the real-time clock to disrupt the kernel RTscheduling guarantees.
+ros_2,An attacker compromises the OS or kernel to alter robot data.
+ros_2,An attacker compromises the OS or kernel to eavesdrop on robotdata.
+ros_2,An attacker gains access to the robot OS through its administration interface.
+ros_2,A node accidentally writes incorrect data to a communication channel.
+ros_2,An attacker deploys a malicious component on the robot.
+ros_2,An attacker can prevent a component running on the robot from executing normally.
+ros_2,An attacker modifies configuration values without authorization.</td>
+ros_2,An attacker accesses configuration values without authorization.
+ros_2,A user accidentally misconfigures the robot.
+ros_2,An attacker modifies the robot file system by physically accessing it.
+ros_2,An attacker eavesdrops on the robot file system by physically accessing it.
+ros_2,An attacker saturates the robot disk with data.
+ros_2,An attacker exfiltrates log data to a remote server.
+ros_2,An attacker spoofs a robot sensor (by e.g. replacing the sensor itselfor manipulating the bus).
+ros_2,An attacker spoofs a robot actuator.
+ros_2,An attacker modifies the command sent to the robot actuators.(intercept & retransmit)
+ros_2,An attacker intercepts the robot actuators command (can recompute localization).
+ros_2,An attacker sends malicious command to actuators to trigger theE-Stop
+ros_2,An attacker compromises the software or sends malicious commands todrain the robot battery.
+ros_2,An attacker connects to an exposed debug port.
+ros_2,An attacker connects to an internal communication bus.
+ros_2,An attacker intercepts the user credentials on their desktop machine.
+ros_2,An attacker intercepts cloud service credentials deployed on the robot.
+ros_2,An attacker gains read access to robot cloud data.
+ros_2,An attacker alters or deletes robot cloud data.
+ros_2,An attacker spoofs the deployment service.
+ros_2,An attacker modifies the binaries sent by the deployment service.
+ros_2,An attacker intercepts the binaries sent by the deployment service.
+ros_2,An attacker prevents the robot and the deployment service from communicating.
+ros_2,An attacker compromises a Certificate Authority trusted by the robot.
+ros_2,An attacker spoofs a component identity.
+ros_2,An attacker intercepts and alters a message.
+ros_2,An attacker writes to a communication channel without authorization.
+ros_2,An attacker listens to a communication channel without authorization.
+ros_2,An attacker prevents a communication channel from beingusable.
+ros_2,An attacker hijacks robot long-range communication
+ros_2,An attacker intercepts robot long-range communications (e.g. MitM)</td>
+ros_2,An attacker disrupts (e.g. jams) robot long-range  communication channels.
+ros_2,An attacker executes arbitrary code using a short-range communication  protocol vulnerability.
+ros_2,An attacker compromises the real-time clock to disrupt the kernel RT scheduling guarantees.
+ros_2,An attacker compromises the OS or kernel to alter robot data.
+ros_2,An attacker compromises the OS or kernel to eavesdrop on robotdata.
+ros_2,An attacker gains access to the robot OS through its administration interface.
+ros_2,A node accidentally writes incorrect data to a communication channel.
+ros_2,An attacker deploys a malicious node on the robot.
+ros_2,An attacker can prevent a component running on the robot from executing normally.
+ros_2,An attacker modifies configuration values without authorization.
+ros_2,An attacker access configuration values without authorization.
+ros_2,A user accidentally misconfigures the robot.
+ros_2,An attacker modifies the robot file system by physically accessing it.
+ros_2,An attacker eavesdrops on the robot file system by physically accessing it.
+ros_2,An attacker saturates the robot disk with data.
+ros_2,An attacker exfiltrates log data to a remote server.
+ros_2,An attacker spoofs a robot sensor (by e.g. replacing the sensor itselfor manipulating the bus).
+ros_2,An attacker spoofs a robot actuator.
+ros_2,An attacker modifies the command sent to the robot actuators.(intercept & retransmit)
+ros_2,An attacker intercepts the robot actuators command (can recompute localization).
+ros_2,An attacker sends malicious command to actuators to trigger theE-Stop
+ros_2,An attacker compromises the software or sends malicious commands todrain the robot battery.
+ros_2,An attacker intercepts the user credentials on their desktop machine.
+ros_2,An attacker intercepts cloud service credentials deployed on the robot.
+ros_2,An attacker alters or deletes robot cloud data.
+ros_2,An attacker alters or deletes robot cloud data.
+ros_2,An attacker spoofs the deployment service.
+ros_2,An attacker modifies the binaries sent by the deployment service.
+ros_2,An attacker intercepts the binaries sent by the depoyment service.
+ros_2,An attacker prevents the robot  and the deployment service from communicating.
+ros_2,An attacker spoofs a software component identity.
+ros_2,An attacker intercepts and alters a message.
+ros_2,An attacker writes to a communication channel without authorization.
+ros_2,An attacker listens to a communication channel without authorization.
+ros_2,An attacker prevents a communication channel from being usable.
+ros_2,An attacker gains unauthenticated access to the remote application interface.
+ros_2,An attacker could eavesdrop communications to the RobotE28099s remote application interface.
+ros_2,An attacker could alter data sent to the RobotE28099s remote application interface.
+ros_2,An attacker compromises the real-time clock to disrupt the kernel RT scheduling guarantees.
+ros_2,An attacker compromises the OS or kernel to alter robot data.
+ros_2,An attacker compromises the OS or kernel to eavesdrop on robotdata.
+ros_2,A node accidentally writes incorrect data to a  communication channel.
+ros_2,An attacker deploys a malicious node on the robot.
+ros_2,An attacker can prevent a component running on the robot from executing normally.
+ros_2,An attacker modifies configuration values without authorization.
+ros_2,An attacker accesses configuration values without authorization.
+ros_2,A user accidentally misconfigures the robot.
+ros_2,An attacker modifies the robot file system by physically accessing it.
+ros_2,An attacker eavesdrops on the robot file system by physically accessing it.
+ros_2,An attacker saturates the robot disk with data.
+ros_2,An attacker exfiltrates log data to a remote server.
+ros_2,An attacker spoofs a robot sensor (by e.g. replacing the sensor itself or manipulating  the bus).
+ros_2,An attacker spoofs a robot actuator.
+ros_2,An attacker modifies the command sent to the robot actuators (intercept & retransmit).
+ros_2,An attacker connects to an exposed debug port.
+ros_2,An attacker connects to an internal communication bus.
+ros_2,An attacker spoofs the deployment service.
+ros_2,An attacker modifies the binaries sent by the deployment service.
+ros_2,An attacker intercepts the binaries sent by the depoyment service.
+ros_2,An attacker prevents the robot  and the deployment service from communicating.
