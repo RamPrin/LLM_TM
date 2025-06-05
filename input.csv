@@ -1,0 +1,2316 @@
+system,text
+oauth2.0,"Overview
+
+2.1.  Scope
+
+   This security considerations document only considers clients bound to
+   a particular deployment as supported by [RFC6749].  Such deployments
+   have the following characteristics:
+
+   o  Resource server URLs are static and well-known at development
+      time; authorization server URLs can be static or discovered.
+
+   o  Token scope values (e.g., applicable URLs and methods) are well-
+      known at development time.
+
+   o  Client registration is out of scope of the current core
+      specification.  Therefore, this document assumes a broad variety
+      of options, from static registration during development time to
+      dynamic registration at runtime.
+
+   The following are considered out of scope:
+
+   o  Communication between the authorization server and resource
+      server.
+
+   o  Token formats.
+
+   o  Except for the resource owner password credentials grant type (see
+      [RFC6749], Section 4.3), the mechanism used by authorization
+      servers to authenticate the user.
+
+   o  Mechanism by which a user obtained an assertion and any resulting
+      attacks mounted as a result of the assertion being false.
+
+   o  Clients not bound to a specific deployment: An example could be a
+      mail client with support for contact list access via the portable
+      contacts API (see [Portable-Contacts]).  Such clients cannot be
+      registered upfront with a particular deployment and should
+      dynamically discover the URLs relevant for the OAuth protocol.
+
+2.2.  Attack Assumptions
+
+   The following assumptions relate to an attacker and resources
+   available to an attacker.  It is assumed that:
+
+   o  the attacker has full access to the network between the client and
+      authorization servers and the client and the resource server,
+      respectively.  The attacker may eavesdrop on any communications
+
+      between those parties.  He is not assumed to have access to
+      communication between the authorization server and resource
+      server.
+
+   o  an attacker has unlimited resources to mount an attack.
+
+   o  two of the three parties involved in the OAuth protocol may
+      collude to mount an attack against the 3rd party.  For example,
+      the client and authorization server may be under control of an
+      attacker and collude to trick a user to gain access to resources.
+
+2.3.  Architectural Assumptions
+
+   This section documents assumptions about the features, limitations,
+   and design options of the different entities of an OAuth deployment
+   along with the security-sensitive data elements managed by those
+   entities.  These assumptions are the foundation of the threat
+   analysis.
+
+   The OAuth protocol leaves deployments with a certain degree of
+   freedom regarding how to implement and apply the standard.  The core
+   specification defines the core concepts of an authorization server
+   and a resource server.  Both servers can be implemented in the same
+   server entity, or they may also be different entities.  The latter is
+   typically the case for multi-service providers with a single
+   authentication and authorization system and is more typical in
+   middleware architectures.
+
+2.3.1.  Authorization Servers
+
+   The following data elements are stored or accessible on the
+   authorization server:
+
+   o  usernames and passwords
+
+   o  client ids and secrets
+
+   o  client-specific refresh tokens
+
+   o  client-specific access tokens (in the case of handle-based design;
+      see Section 3.1)
+
+   o  HTTPS certificate/key
+
+   o  per-authorization process (in the case of handle-based design;
+      Section 3.1): ""redirect_uri"", ""client_id"", authorization ""code""
+
+
+2.3.2.  Resource Server
+
+   The following data elements are stored or accessible on the resource
+   server:
+
+   o  user data (out of scope)
+
+   o  HTTPS certificate/key
+
+   o  either authorization server credentials (handle-based design; see
+      Section 3.1) or authorization server shared secret/public key
+      (assertion-based design; see Section 3.1)
+
+   o  access tokens (per request)
+
+   It is assumed that a resource server has no knowledge of refresh
+   tokens, user passwords, or client secrets.
+
+2.3.3.  Client
+
+   In OAuth, a client is an application making protected resource
+   requests on behalf of the resource owner and with its authorization.
+   There are different types of clients with different implementation
+   and security characteristics, such as web, user-agent-based, and
+   native applications.  A full definition of the different client types
+   and profiles is given in [RFC6749], Section 2.1.
+
+   The following data elements are stored or accessible on the client:
+
+   o  client id (and client secret or corresponding client credential)
+
+   o  one or more refresh tokens (persistent) and access tokens
+      (transient) per end user or other security-context or delegation
+      context
+
+   o  trusted certification authority (CA) certificates (HTTPS)
+
+   o  per-authorization process: ""redirect_uri"", authorization ""code""
+
+3.  Security Features
+
+   These are some of the security features that have been built into the
+   OAuth 2.0 protocol to mitigate attacks and security issues.
+
+
+
+
+
+3.1.  Tokens
+
+   OAuth makes extensive use of many kinds of tokens (access tokens,
+   refresh tokens, authorization ""codes"").  The information content of a
+   token can be represented in two ways, as follows:
+
+   Handle (or artifact)  A 'handle' is a reference to some internal data
+      structure within the authorization server; the internal data
+      structure contains the attributes of the token, such as user id
+      (UID), scope, etc.  Handles enable simple revocation and do not
+      require cryptographic mechanisms to protect token content from
+      being modified.  On the other hand, handles require communication
+      between the issuing and consuming entity (e.g., the authorization
+      server and resource server) in order to validate the token and
+      obtain token-bound data.  This communication might have a negative
+      impact on performance and scalability if both entities reside on
+      different systems.  Handles are therefore typically used if the
+      issuing and consuming entity are the same.  A 'handle' token is
+      often referred to as an 'opaque' token because the resource server
+      does not need to be able to interpret the token directly; it
+      simply uses the token.
+
+   Assertion (aka self-contained token)  An assertion is a parseable
+      token.  An assertion typically has a duration, has an audience,
+      and is digitally signed in order to ensure data integrity and
+      origin authentication.  It contains information about the user and
+      the client.  Examples of assertion formats are Security Assertion
+      Markup Language (SAML) assertions [OASIS.saml-core-2.0-os] and
+      Kerberos tickets [RFC4120].  Assertions can typically be directly
+      validated and used by a resource server without interactions with
+      the authorization server.  This results in better performance and
+      scalability in deployments where the issuing and consuming
+      entities reside on different systems.  Implementing token
+      revocation is more difficult with assertions than with handles.
+
+   Tokens can be used in two ways to invoke requests on resource
+   servers, as follows:
+
+   bearer token  A 'bearer token' is a token that can be used by any
+      client who has received the token (e.g., [RFC6750]).  Because mere
+      possession is enough to use the token, it is important that
+      communication between endpoints be secured to ensure that only
+      authorized endpoints may capture the token.  The bearer token is
+      convenient for client applications, as it does not require them to
+      do anything to use them (such as a proof of identity).  Bearer
+      tokens have similar characteristics to web single-sign-on (SSO)
+      cookies used in browsers.
+
+   proof token  A 'proof token' is a token that can only be used by a
+      specific client.  Each use of the token requires the client to
+      perform some action that proves that it is the authorized user of
+      the token.  Examples of this are MAC-type access tokens, which
+      require the client to digitally sign the resource request with a
+      secret corresponding to the particular token sent with the request
+      (e.g., [OAuth-HTTP-MAC]).
+
+3.1.1.  Scope
+
+   A scope represents the access authorization associated with a
+   particular token with respect to resource servers, resources, and
+   methods on those resources.  Scopes are the OAuth way to explicitly
+   manage the power associated with an access token.  A scope can be
+   controlled by the authorization server and/or the end user in order
+   to limit access to resources for OAuth clients that these parties
+   deem less secure or trustworthy.  Optionally, the client can request
+   the scope to apply to the token but only for a lesser scope than
+   would otherwise be granted, e.g., to reduce the potential impact if
+   this token is sent over non-secure channels.  A scope is typically
+   complemented by a restriction on a token's lifetime.
+
+3.1.2.  Limited Access Token Lifetime
+
+   The protocol parameter ""expires_in"" allows an authorization server
+   (based on its policies or on behalf of the end user) to limit the
+   lifetime of an access token and to pass this information to the
+   client.  This mechanism can be used to issue short-lived tokens to
+   OAuth clients that the authorization server deems less secure, or
+   where sending tokens over non-secure channels.
+
+3.2.  Access Token
+
+   An access token is used by a client to access a resource.  Access
+   tokens typically have short life spans (minutes or hours) that cover
+   typical session lifetimes.  An access token may be refreshed through
+   the use of a refresh token.  The short lifespan of an access token,
+   in combination with the usage of refresh tokens, enables the
+   possibility of passive revocation of access authorization on the
+   expiry of the current access token.
+
+3.3.  Refresh Token
+
+   A refresh token represents a long-lasting authorization of a certain
+   client to access resources on behalf of a resource owner.  Such
+   tokens are exchanged between the client and authorization server
+   only.  Clients use this kind of token to obtain (""refresh"") new
+   access tokens used for resource server invocations.
+   A refresh token, coupled with a short access token lifetime, can be
+   used to grant longer access to resources without involving end-user
+   authorization.  This offers an advantage where resource servers and
+   authorization servers are not the same entity, e.g., in a distributed
+   environment, as the refresh token is always exchanged at the
+   authorization server.  The authorization server can revoke the
+   refresh token at any time, causing the granted access to be revoked
+   once the current access token expires.  Because of this, a short
+   access token lifetime is important if timely revocation is a high
+   priority.
+
+   The refresh token is also a secret bound to the client identifier and
+   client instance that originally requested the authorization; the
+   refresh token also represents the original resource owner grant.
+   This is ensured by the authorization process as follows:
+
+   1.  The resource owner and user agent safely deliver the
+       authorization ""code"" to the client instance in the first place.
+
+   2.  The client uses it immediately in secure transport-level
+       communications to the authorization server and then securely
+       stores the long-lived refresh token.
+
+   3.  The client always uses the refresh token in secure transport-
+       level communications to the authorization server to get an access
+       token (and optionally roll over the refresh token).
+
+   So, as long as the confidentiality of the particular token can be
+   ensured by the client, a refresh token can also be used as an
+   alternative means to authenticate the client instance itself.
+
+3.4.  Authorization ""code""
+
+   An authorization ""code"" represents the intermediate result of a
+   successful end-user authorization process and is used by the client
+   to obtain access and refresh tokens.  Authorization ""codes"" are sent
+   to the client's redirect URI instead of tokens for two purposes:
+
+   1.  Browser-based flows expose protocol parameters to potential
+       attackers via URI query parameters (HTTP referrer), the browser
+       cache, or log file entries, and could be replayed.  In order to
+       reduce this threat, short-lived authorization ""codes"" are passed
+       instead of tokens and exchanged for tokens over a more secure
+       direct connection between the client and the authorization
+       server.
+
+
+
+   2.  It is much simpler to authenticate clients during the direct
+       request between the client and the authorization server than in
+       the context of the indirect authorization request.  The latter
+       would require digital signatures.
+
+3.5.  Redirect URI
+
+   A redirect URI helps to detect malicious clients and prevents
+   phishing attacks from clients attempting to trick the user into
+   believing the phisher is the client.  The value of the actual
+   redirect URI used in the authorization request has to be presented
+   and is verified when an authorization ""code"" is exchanged for tokens.
+   This helps to prevent attacks where the authorization ""code"" is
+   revealed through redirectors and counterfeit web application clients.
+   The authorization server should require public clients and
+   confidential clients using the implicit grant type to pre-register
+   their redirect URIs and validate against the registered redirect URI
+   in the authorization request.
+
+3.6.  ""state"" Parameter
+
+   The ""state"" parameter is used to link requests and callbacks to
+   prevent cross-site request forgery attacks (see Section 4.4.1.8)
+   where an attacker authorizes access to his own resources and then
+   tricks a user into following a redirect with the attacker's token.
+   This parameter should bind to the authenticated state in a user agent
+   and, as per the core OAuth spec, the user agent must be capable of
+   keeping it in a location accessible only by the client and user
+   agent, i.e., protected by same-origin policy.
+
+3.7.  Client Identifier
+
+   Authentication protocols have typically not taken into account the
+   identity of the software component acting on behalf of the end user.
+   OAuth does this in order to increase the security level in delegated
+   authorization scenarios and because the client will be able to act
+   without the user being present.
+
+   OAuth uses the client identifier to collate associated requests to
+   the same originator, such as
+
+   o  a particular end-user authorization process and the corresponding
+      request on the token's endpoint to exchange the authorization
+      ""code"" for tokens, or
+
+
+
+
+   o  the initial authorization and issuance of a token by an end user
+      to a particular client, and subsequent requests by this client to
+      obtain tokens without user consent (automatic processing of
+      repeated authorizations)
+
+   This identifier may also be used by the authorization server to
+   display relevant registration information to a user when requesting
+   consent for a scope requested by a particular client.  The client
+   identifier may be used to limit the number of requests for a
+   particular client or to charge the client per request.  It may
+   furthermore be useful to differentiate access by different clients,
+   e.g., in server log files.
+
+   OAuth defines two client types, confidential and public, based on
+   their ability to authenticate with the authorization server (i.e.,
+   ability to maintain the confidentiality of their client credentials).
+   Confidential clients are capable of maintaining the confidentiality
+   of client credentials (i.e., a client secret associated with the
+   client identifier) or capable of secure client authentication using
+   other means, such as a client assertion (e.g., SAML) or key
+   cryptography.  The latter is considered more secure.
+
+   The authorization server should determine whether the client is
+   capable of keeping its secret confidential or using secure
+   authentication.  Alternatively, the end user can verify the identity
+   of the client, e.g., by only installing trusted applications.  The
+   redirect URI can be used to prevent the delivery of credentials to a
+   counterfeit client after obtaining end-user authorization in some
+   cases but can't be used to verify the client identifier.
+
+   Clients can be categorized as follows based on the client type,
+   profile (e.g., native vs. web application; see [RFC6749], Section 9),
+   and deployment model:
+
+   Deployment-independent ""client_id"" with pre-registered ""redirect_uri""
+      and without ""client_secret""  Such an identifier is used by
+      multiple installations of the same software package.  The
+      identifier of such a client can only be validated with the help of
+      the end-user.  This is a viable option for native applications in
+      order to identify the client for the purpose of displaying meta
+      information about the client to the user and to differentiate
+      clients in log files.  Revocation of the rights associated with
+      such a client identifier will affect ALL deployments of the
+      respective software.
+
+
+
+
+   Deployment-independent ""client_id"" with pre-registered ""redirect_uri""
+      and with ""client_secret""  This is an option for native
+      applications only, since web applications would require different
+      redirect URIs.  This category is not advisable because the client
+      secret cannot be protected appropriately (see Section 4.1.1).  Due
+      to its security weaknesses, such client identities have the same
+      trust level as deployment-independent clients without secrets.
+      Revocation will affect ALL deployments.
+
+   Deployment-specific ""client_id"" with pre-registered ""redirect_uri""
+      and with ""client_secret""  The client registration process ensures
+      the validation of the client's properties, such as redirect URI,
+      web site URL, web site name, and contacts.  Such a client
+      identifier can be utilized for all relevant use cases cited above.
+      This level can be achieved for web applications in combination
+      with a manual or user-bound registration process.  Achieving this
+      level for native applications is much more difficult.  Either the
+      installation of the application is conducted by an administrator,
+      who validates the client's authenticity, or the process from
+      validating the application to the installation of the application
+      on the device and the creation of the client credentials is
+      controlled end-to-end by a single entity (e.g., application market
+      provider).  Revocation will affect a single deployment only.
+
+   Deployment-specific ""client_id"" with ""client_secret"" without
+      validated properties  Such a client can be recognized by the
+      authorization server in transactions with subsequent requests
+      (e.g., authorization and token issuance, refresh token issuance,
+      and access token refreshment).  The authorization server cannot
+      assure any property of the client to end users.  Automatic
+      processing of re-authorizations could be allowed as well.  Such
+      client credentials can be generated automatically without any
+      validation of client properties, which makes it another option,
+      especially for native applications.  Revocation will affect a
+      single deployment only."
+s3,"Amazon Simple Storage Service (S3) is a scalable, object storage service offered by Amazon Web Services (AWS). It is designed to store and retrieve any amount of data at any time, from anywhere on the web. Here’s a detailed breakdown of how Amazon S3 operates:
+
+Core Components
+Buckets:
+
+Definition: A bucket is a container for objects stored in S3. Every object stored in S3 must reside within a bucket.
+Naming: Bucket names must be globally unique across all existing bucket names in Amazon S3.
+Regions: Buckets can be created in different AWS regions, which can help in reducing latency and costs by storing data closer to the users.
+Objects:
+
+Definition: An object is a file stored in S3. It consists of data and metadata.
+Data: The actual content of the file.
+Metadata: Information about the object, such as content type, size, and custom metadata.
+Keys:
+
+Definition: A key is the unique identifier for an object within a bucket. It is the path to the object.
+Structure: Keys can include slashes to simulate a directory structure, but S3 is a flat namespace.
+Operations
+Create Bucket:
+
+This operation involves setting up a new bucket in a specific region. You can specify additional settings like versioning, logging, and access control.
+Upload Object:
+
+You can upload objects to a bucket using various methods, including the AWS Management Console, AWS CLI, SDKs, or REST API. The upload process involves specifying the bucket name, key, and object data.
+Retrieve Object:
+
+Objects can be retrieved using their bucket name and key. S3 supports different retrieval methods, including direct HTTP requests, SDKs, and the AWS CLI.
+Delete Object:
+
+Objects can be deleted from a bucket using their key. S3 provides options for deleting individual objects or multiple objects in a single request.
+List Objects:
+
+You can list the objects stored in a bucket. This operation can be filtered to return only a subset of objects based on prefix and delimiter parameters.
+Access Control
+Bucket Policies:
+
+These are JSON documents that define permissions for a bucket and the objects within it. Bucket policies can grant permissions to AWS accounts, IAM users, or groups.
+Access Control Lists (ACLs):
+
+ACLs provide a way to grant permissions to specific users or groups. They can be applied to buckets and objects.
+IAM Policies:
+
+Identity and Access Management (IAM) policies can be used to grant permissions to users and roles to perform actions on S3 resources.
+Pre-signed URLs:
+
+These are temporary URLs that grant time-limited access to private objects. They are useful for sharing objects securely.
+Data Management
+Versioning:
+
+S3 versioning allows you to keep multiple versions of an object in the same bucket. This is useful for data recovery and archiving.
+Lifecycle Policies:
+
+These policies define rules for managing the lifecycle of objects in a bucket. They can specify actions like transitioning objects to different storage classes or deleting objects after a certain period.
+Storage Classes:
+
+S3 offers different storage classes optimized for different use cases, including frequent access, infrequent access, and archive storage. Each class has different pricing and performance characteristics.
+Cross-Region Replication:
+
+This feature automatically replicates objects from a source bucket in one region to a destination bucket in another region. It is useful for disaster recovery and data availability.
+Security
+Encryption:
+
+S3 supports server-side encryption, client-side encryption, and AWS Key Management Service (KMS) for encrypting objects at rest.
+Logging:
+
+S3 can log requests made to a bucket, which can be useful for auditing and monitoring access.
+Security Auditing:
+
+AWS provides tools like AWS CloudTrail to log API calls made to S3, which can be used for security auditing and compliance.
+Performance and Scalability
+High Availability:
+
+S3 is designed to be highly available, with data replicated across multiple facilities within an AWS region.
+Scalability:
+
+S3 can scale to store and retrieve any amount of data, and it automatically handles the underlying infrastructure to ensure performance and reliability.
+Global Reach:
+
+S3 is available in multiple regions worldwide, allowing you to store and access data from anywhere.
+"
+gcs,"Introduction
+The consumption of cloud services has grown rapidly over the last few years and one of the major providers to benefit from this growth is Google Cloud Platform (GCP). The security challenges faced by small/medium companies and enterprises when deploying new services into the cloud can often be daunting, so to get a better understanding of these challenges on GCP and help pointing out the necessary and available security controls, we used a threat modelling approach.
+
+As a first step we chose to threat model GCP’s Google Cloud Storage service. To gain a better understanding of the service, we identified its key features and then drew a high-level diagram of the service. During the construction of the diagram, it was possible to identify the main data assets involved and any base security controls that were enabled by default. From there, it was possible to create a threat model for the Google Cloud Storage service with all the available features, security control recommendations were provided that would mitigate the identified threats.
+
+The STRIDE model was used to create the threat model, as it provided a well proven methodology and an industry recognised approach.
+
+The first several sections of this post look at threat modeling generic public cloud services through a STRIDE threat modeling framework (as applied, by way of example, to Google Cloud Platform and its’ specific terminology, architecture, and services), but could equally be applied to other cloud vendors as well to think through potential threats in their services. In the Threat Mitigation section toward the end of the post, we offer some more GCP-specific configuration choices that can help mitigate some of these various types of security threats.
+
+STRIDE Overview
+The STRIDE model can be used to visualize network and infrastructure threats, derived from the architecture overview and the data flows. The STRIDE model derives its name from an acronym for the threat groupings that it uses to categorise the threats (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service and Elevation of Privilege).
+
+The method builds on the diagram, and the security controls implemented, to enumerate distinct methods that may be used by an attacker, either independently or in conjunction with each other, to compromise the system.
+
+Spoofing – Spoofing is a violation of authenticity.
+Tampering – Tampering is a violation of integrity.
+Repudiation – Claiming to have not performed an action.
+Information Disclosure – Information disclosure is a violation of confidentiality.
+Denial of Service – Denial of service (DoS) is a violation of availability.
+Elevation of Privilege – Elevation of privilege is a violation of authorisation.
+Source: https://en.wikipedia.org/wiki/STRIDE_(security)
+
+Google Cloud Storage Key Features
+Using publicly available documentation provided by Google, it was possible to identify the key features of the Google Cloud Storage service.
+
+Feature        Description
+Storage Bucket        Stores uploaded data objects.
+Object        Data is uploaded to a bucket as an object.
+Upload/download objects        Objects can be uploaded or downloaded from a bucket.
+Bucket IAM Permissions        Access to a bucket can be controlled through Identity and Access Management (IAM). Uniform and Fine-grained access models.
+Signed URLs        Signed URLs contain authentication information in their query string, allowing users without credentials to perform specific actions on a resource, such as buckets.
+Object ACLs        Access to individual objects can be controlled Access Control Lists (ACLs). Fine-grained access model only.
+Object versioning        Objects can have multiple versions.
+Retention Policy        Deletion or modification of objects can be prevented for a specified minimum period after they are uploaded.
+Object lifecycle        Based on lifecycle rules, actions can be applied to objects when certain conditions are met.
+Replication        Replication of data between regions.
+Encryption        Storage is encrypted using either a Google Managed Key, Customer Managed Key or Customer Supplied Keys.
+Event-based hold        When enabled, event-based holds are placed on objects when they are uploaded to the bucket.
+Prevent Public Access        Ensures the bucket and objects are not publicly accessible.
+Labels        Key-value pair labels are used for organising resources.
+Logging Monitoring        Logging and monitoring are available through Google Operations.
+Static website content        Static website content can be hosted in buckets.
+Organisation Policies        Constraints can be set over the use of the Cloud Storage service.
+VPC Service Controls        Access restrictions can be set on the Cloud Storage API.
+Access from other GCP services        Other GCP services can access cloud storage buckets, through the Google API.
+Single of multi-regional        Depending on performance, and availability requirements, data can be single, dual, or multi-regional.
+Google Cloud Storage Key Features – Source: https://cloud.google.com/storage
+Diagram
+The diagram of the Google Cloud Storage service was produced using the publicly available documentations and through access to a GCP console in a test environment. The aim of the diagram is to provide a high-level view of the main interfaces and components involved in the Google Cloud Storage service.
+
+
+Assets
+Assets represent data, functionality, or an attribute of a system that a threat actor is interested in acquiring. The assets identified that would need protection when using Google Cloud Storage, would likely to be the data stored in the buckets, the authentication credentials that would be used to access the service, and any audit log related data.
+
+Asset ID        Asset Name
+A01        Bucket object data
+A02        Authentication tokens
+A03        Log data
+Assets
+Threat Actors
+Threat actors are individuals that attack the system to either gain access to sensitive information or disrupt the system’s normal behaviour. We could consider the following potential threat actors to model attack scenarios against Google Cloud Storage.
+
+Threat Agent ID        Threat Agent
+TA01        Internal attacker
+TA02        Internal malicious user
+TA03        Compromised internal service
+TA04        Compromised external service
+TA05        External attacker over the Internet
+TA06        Google Engineers
+Threat Actors
+Attack Goals
+An attacker’s motives and goals are often hard to accurately predict, but for Google Cloud Storage are likely to fall in the following categories.
+
+Attack Goal ID        Attack Goal
+AG01        Gain access to data content
+AG02        Compromise stored data integrity
+AG03        Disclose data content
+AG04        Tamper with security controls
+AG05        Elevate Privileges
+AG06        Host malicious content
+Attack Goals
+Default Base Security Controls
+Transport layer encryption and data-at-rest encryption are enabled by default on Google Cloud Storage and cannot be disabled by GCP users. These represent the default base security controls identified for the threat model. By default, data-at-rest encryption is enabled on buckets using a Google Managed Key, however Customer Managed Keys can also be used.
+
+Other security controls are available and configurable on Google Cloud Storage, as can be seen in the key features. When enabled and configured correctly these can significantly improve the security of the service.
+
+Control ID        Default Base Security Control
+C01        HTTPS transport layer encryption
+C02        Data-at-rest encryption
+Default Base Security Controls – Source: https://cloud.google.com/storage
+Potential System Weaknesses
+By examining the diagram, it is possible to find areas of relative security weakness (i.e.: opportunities for stronger security configurations) in Google Cloud Storage, when only the default base security controls are in use. The following potential weaknesses and opportunities for user-driven increased security were identified.
+
+Weak administrator credentials, without Multi-Factor Authentication (MFA) could be stolen or guessed, which could lead to disclosure, modification, or loss of data. This could also lead to the weakening of the Cloud Storage security settings.
+Like for all cloud services, user credentials with Cloud Storage permissions could be stolen or guessed (e.g. through phishing and password guessing attacks), which could lead to disclosure, modification, or loss of data.
+Like for all cloud services, service account credentials used by external services and other GCP projects could be stolen or guessed (e.g. through phishing and password guessing attacks).
+Like for all cloud services, service account credentials used by other GCP services to access the storage bucket could be intercepted, stolen, or guessed (e.g. through phishing and password guessing attacks).
+External service is compromised, which could lead to the disclosure, modification, or loss of data.
+GCP service or application code is compromised, which could lead to the disclosure, modification, or loss of data. For example:
+Vulnerability in code running on a VM.
+Vulnerability in code running on App Engine or Cloud Functions.
+Vulnerability in GCP service itself.
+Cloud storage bucket is publicly exposed, which could lead to the disclosure of data.
+Overly permissive access controls could lead to loss of confidentiality, integrity and availability by other GCP projects or Google Identities.
+Cloud Storage service outage causing loss of access to data, or loss of data.
+Service issues not being identified and resolved quickly, due to:
+Lack of monitoring
+Lack of logging resulting in and inability to identify issues
+Organisation/project owner
+Google
+Lack of detailed logging, impacting security investigations and repudiation.
+Google personnel accessing data stored in Cloud Storage buckets."
+IoT_Auth,"Internet of Things (IoT) authentication is a critical aspect of securing IoT devices and ensuring that only authorized devices and users can access and interact with the network and its resources. IoT authentication involves verifying the identity of devices, users, and services to prevent unauthorized access and ensure secure communication. Here’s a detailed breakdown of how IoT authentication works:
+
+Core Components
+Devices:
+
+IoT Devices: These are the physical devices that connect to the IoT network, such as sensors, actuators, smart home devices, and industrial machinery.
+Embedded Systems: Many IoT devices have embedded systems that include processors, memory, and communication interfaces.
+Users:
+
+End Users: Individuals who interact with IoT devices, such as homeowners, industrial operators, and consumers.
+Administrators: Personnel responsible for managing and maintaining the IoT network.
+Network Infrastructure:
+
+Gateways: Devices that connect IoT devices to the internet or other networks.
+Cloud Services: Servers and services hosted in the cloud that manage IoT data and provide services to users.
+Authentication Servers:
+
+Directory Services: Systems that store and manage user and device credentials.
+Authentication Protocols: Mechanisms for verifying identities, such as OAuth, TLS, and custom protocols.
+Authentication Mechanisms
+Device Authentication:
+
+Pre-Shared Keys (PSKs): Shared secrets between devices and authentication servers used to verify identity.
+Public Key Infrastructure (PKI): Uses public and private keys for secure communication and identity verification.
+Certificates: Digital documents that verify the identity of a device or user.
+Hardware Security Modules (HSMs): Specialized hardware that securely stores and processes cryptographic keys and operations.
+Biometric Authentication: Uses unique biological characteristics of a device, such as a unique chip ID or fingerprint, for authentication.
+User Authentication:
+
+Username and Password: Basic method where users provide a username and password to access the system.
+Multi-Factor Authentication (MFA): Combines multiple methods of verification, such as passwords, biometrics, and one-time passwords (OTPs).
+Biometric Authentication: Uses unique biological characteristics of a user, such as fingerprints, facial recognition, or iris scans.
+Single Sign-On (SSO): Allows users to access multiple systems with a single set of credentials.
+Service Authentication:
+
+API Keys: Unique identifiers used to authenticate requests to APIs.
+OAuth and OAuth 2.0: Protocols for authorization that allow third-party services to access user data without sharing passwords.
+JWT (JSON Web Tokens): Compact, URL-safe tokens that encode claims to be transferred between parties.
+Authentication Protocols
+TLS/SSL:
+
+Transport Layer Security (TLS) and Secure Sockets Layer (SSL): Protocols that provide secure communication channels over a network by encrypting data and verifying the identity of the communicating parties.
+OAuth and OAuth 2.0:
+
+Open Authorization (OAuth): Protocols that allow third-party services to access user data without sharing passwords, providing a secure way to authorize access.
+MQTT with TLS:
+
+Message Queuing Telemetry Transport (MQTT): A lightweight messaging protocol commonly used in IoT. When combined with TLS, it provides secure communication between devices and servers.
+CoAP with DTLS:
+
+Constrained Application Protocol (CoAP): A lightweight protocol designed for constrained environments. When combined with DTLS (Datagram Transport Layer Security), it provides secure communication for IoT devices.
+Custom Protocols:
+
+Organizations may develop custom authentication protocols tailored to their specific security requirements and constraints.
+Key Considerations
+Scalability:
+
+Authentication mechanisms must be scalable to handle a large number of devices and users without performance degradation.
+Latency:
+
+IoT devices often operate in real-time environments, so authentication mechanisms should minimize latency to ensure timely communication.
+Resource Constraints:
+
+Many IoT devices have limited processing power and memory, so authentication mechanisms should be lightweight and efficient.
+Security:
+
+Authentication mechanisms must be robust against various attacks, including replay attacks, man-in-the-middle attacks, and brute-force attacks.
+Compliance:
+
+IoT authentication should comply with relevant standards and regulations, such as GDPR, HIPAA, and industry-specific standards.
+User Experience:
+
+Authentication mechanisms should be user-friendly and provide a seamless experience for end users.
+Key Management:
+
+Secure management of cryptographic keys is crucial for maintaining the integrity and security of the authentication process.
+Monitoring and Logging:
+
+Continuous monitoring and logging of authentication attempts and access events are essential for detecting and responding to suspicious activities.
+"
+ssl,"SSL (Secure Sockets Layer) and its successor, TLS (Transport Layer Security), are cryptographic protocols designed to provide secure communication over a computer network. They ensure that data transmitted between a client and a server is encrypted, protecting it from eavesdropping, tampering, and forgery. Here's a detailed explanation of how SSL/TLS works:
+
+Key Concepts
+Encryption: The process of converting plain text into a coded format that can only be read by someone with the appropriate decryption key.
+Decryption: The process of converting encrypted data back into its original plain text format.
+Public Key Cryptography: A cryptographic system that uses pairs of keys: a public key, which is shared openly, and a private key, which is kept secret.
+Certificates: Digital documents that verify the identity of a server or client. They are issued by trusted Certificate Authorities (CAs).
+SSL/TLS Handshake Process
+The SSL/TLS handshake is the process by which a client and server establish a secure connection. Here are the main steps involved:
+
+Client Hello:
+
+The client initiates the handshake by sending a Client Hello message to the server.
+This message includes the SSL/TLS version, a random number, a list of supported cipher suites, and compression methods.
+plaintext
+
+
+ClientHello
+Version: TLS 1.2
+Random: <random number>
+Cipher Suites: [TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, ...]
+Compression Methods: [null]
+
+Server Hello:
+
+The server responds with a Server Hello message.
+This message includes the SSL/TLS version, a random number, the chosen cipher suite, and compression method.
+plaintext
+
+
+ServerHello
+Version: TLS 1.2
+Random: <random number>
+Cipher Suite: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+Compression Method: null
+
+Certificate:
+
+The server sends its digital certificate to the client.
+The certificate contains the server's public key, domain name, and is signed by a trusted Certificate Authority (CA).
+Server Key Exchange (Optional):
+
+If the chosen cipher suite requires it, the server sends a Server Key Exchange message.
+This message includes the server's public key and parameters for key exchange.
+Server Hello Done:
+
+The server sends a Server Hello Done message to indicate that it has finished sending messages.
+plaintext
+
+
+ServerHelloDone
+
+Client Key Exchange:
+
+The client generates a pre-master secret and encrypts it with the server's public key.
+The client sends the encrypted pre-master secret to the server.
+Change Cipher Spec:
+
+The client sends a Change Cipher Spec message to indicate that it will start using the negotiated cipher suite for future messages.
+Finished:
+
+The client sends a Finished message, which is a hash of all previous handshake messages.
+This message is encrypted with the newly negotiated symmetric key.
+Change Cipher Spec:
+
+The server sends a Change Cipher Spec message to indicate that it will start using the negotiated cipher suite for future messages.
+Finished:
+
+The server sends a Finished message, which is a hash of all previous handshake messages    - This message is encrypted with the newly negotiated symmetric key.
+Key Exchange and Symmetric Encryption
+Key Exchange: During the handshake, the client and server agree on a symmetric key for encrypting and decrypting data. This is typically done using a key exchange algorithm like ECDHE (Elliptic Curve Diffie-Hellman Ephemeral).
+Symmetric Encryption: Once the symmetric key is established, all subsequent data exchanged between the client and server is encrypted and decrypted using this key. Common symmetric encryption algorithms include AES (Advanced Encryption Standard).
+Certificate Verification
+Certificate Authority (CA): A trusted third party that issues digital certificates.
+Certificate Chain: A series of certificates that establish the trustworthiness of the server's certificate. It includes the server's certificate, intermediate certificates, and the root certificate.
+Certificate Validation: The client verifies the server's certificate by checking its signature against the CA's public key, ensuring the certificate is valid and has not been tampered with.
+Example of SSL/TLS Handshake
+Here's a simplified example of the SSL/TLS handshake process:
+
+Client Hello:
+
+plaintext
+
+
+ClientHello
+Version: TLS 1.2
+Random: 0x1234567890abcdef...
+Cipher Suites: [TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, ...]
+Compression Methods: [null]
+
+Server Hello:
+
+plaintext
+
+
+ServerHello
+Version: TLS 1.2
+Random: 0xabcdef1234567890...
+Cipher Suite: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+Compression Method: null
+
+Certificate:
+
+plaintext
+
+
+Certificate
+Server Certificate: <server's certificate>
+
+Server Key Exchange (Optional):
+
+plaintext
+
+
+ServerKeyExchange
+Public Key: <server's public key>
+Parameters: <key exchange parameters>
+
+Server Hello Done:
+
+plaintext
+
+
+ServerHelloDone
+
+Client Key Exchange:
+
+plaintext
+
+
+ClientKeyExchange
+Pre-Master Secret: <encrypted pre-master secret>
+
+Change Cipher Spec:
+
+plaintext
+
+
+ChangeCipherSpec
+
+Finished:
+
+plaintext
+
+
+Finished
+Hash: <hash of handshake messages>
+
+Change Cipher Spec:
+
+plaintext
+
+
+ChangeCipherSpec
+
+Finished:
+
+plaintext
+
+
+Finished
+Hash: <hash of handshake messages>
+
+Benefits of SSL/TLS
+Confidentiality: Data is encrypted, preventing eavesdropping.
+Integrity: Data is protected from tampering.
+Authentication: Ensures that the server (and optionally the client) is who it claims to be.
+Non-repudiation: Provides proof that a message was sent by a particular party.
+Conclusion
+SSL/TLS is a robust protocol that ensures secure communication over the internet. By understanding the handshake process and the role of certificates and encryption, you can better appreciate how SSL/TLS protects data in transit. If you have any specific questions or need further details, feel free to ask!
+"
+PCI DSS,"The Payment Card Industry Data Security Standard (PCI DSS) is a comprehensive set of security standards designed to ensure that organizations that process, store, or transmit credit card information maintain a secure environment. PCI DSS is managed by the Payment Card Industry Security Standards Council (PCI SSC) and is applicable to all entities involved in payment card processing, regardless of their size or number of transactions.
+
+Key Components of PCI DSS
+Scope:
+
+Cardholder Data Environment (CDE): This includes all people, processes, and technology that store, process, or transmit cardholder data. The scope of PCI DSS compliance is limited to the CDE.
+Cardholder Data: This includes sensitive information such as primary account numbers (PANs), cardholder names, expiration dates, and service codes.
+Requirements:
+
+PCI DSS consists of 12 core requirements, each with multiple sub-requirements. These requirements are organized into six categories:
+Categories and Requirements
+Build and Maintain a Secure Network:
+
+Requirement 1: Install and maintain a firewall configuration to protect cardholder data.
+Requirement 2: Do not use vendor-supplied defaults for system passwords and other security parameters.
+Protect Cardholder Data:
+
+Requirement 3: Protect stored cardholder data.
+Requirement 4: Encrypt transmission of cardholder data across open, public networks.
+Maintain a Vulnerability Management Program:
+
+Requirement 5: Use and regularly update anti-virus software.
+Requirement 6: Develop and maintain secure systems and applications.
+Implement Strong Access Control Measures:
+
+Requirement 7: Restrict access to cardholder data by business need-to-know.
+Requirement 8: Assign a unique ID to each person with computer access.
+Requirement 9: Restrict physical access to cardholder data.
+Regularly Monitor and Test Networks:
+
+Requirement 10: Track and monitor all access to network resources and cardholder data.
+Requirement 11: Regularly test security systems and processes.
+Maintain an Information Security Policy:
+
+Requirement 12: Maintain a policy that addresses information security.
+Compliance Process
+Self-Assessment:
+
+Organizations must perform a self-assessment to determine their compliance with PCI DSS requirements. This involves reviewing policies, procedures, and controls to ensure they meet the standards.
+Validation:
+
+Depending on the volume of transactions, organizations may need to undergo an external assessment by a Qualified Security Assessor (QSA) or a third-party auditor. This validation process ensures that the self-assessment is thorough and accurate.
+Reporting:
+
+Organizations must submit a Report on Compliance (RoC) to their acquiring bank or payment processor. The RoC documents the organization's compliance status and any actions taken to address any findings.
+Continuous Improvement:
+
+PCI DSS is not a one-time compliance effort. Organizations must continuously monitor and improve their security measures to ensure ongoing compliance.
+Key Security Controls
+Firewalls and Network Security:
+
+Implement firewalls to protect cardholder data and ensure that only authorized traffic is allowed into the network.
+Encryption:
+
+Encrypt cardholder data both at rest and in transit to protect it from unauthorized access.
+Access Control:
+
+Implement strong access controls to ensure that only authorized personnel have access to cardholder data. This includes using unique user IDs and strong passwords.
+Monitoring and Logging:
+
+Continuously monitor network traffic and maintain logs to detect and respond to suspicious activities.
+Vulnerability Management:
+
+Regularly update and patch systems to protect against known vulnerabilities.
+Information Security Policy:
+
+Develop and maintain a comprehensive information security policy that addresses all aspects of PCI DSS requirements.
+Penalties and Consequences
+Non-Compliance: Organizations that fail to comply with PCI DSS can face significant penalties, including fines, legal action, and damage to reputation.
+Data Breaches: Non-compliance can also lead to increased risk of data breaches, which can result in financial losses and legal liabilities.
+"
+CT,"Certificate Transparency (CT) is a security mechanism designed to improve the transparency and accountability of SSL/TLS certificates issued by Certificate Authorities (CAs). It helps detect and prevent the issuance of fraudulent certificates by ensuring that all certificates are publicly logged and can be audited. Here’s a detailed breakdown of how Certificate Transparency works:
+
+Core Components
+Certificate Authorities (CAs):
+
+Role: CAs are trusted entities that issue SSL/TLS certificates to domain owners to establish secure connections.
+Responsibility: CAs must comply with CT requirements by logging all issued certificates in public CT logs.
+Public CT Logs:
+
+Role: CT logs are publicly accessible and immutable logs that record all certificates issued by CAs.
+Functionality: Logs store certificate information, including the certificate itself, the issuing CA, and timestamps.
+Monitors:
+
+Role: Monitors are independent entities that continuously check CT logs for suspicious or fraudulent certificates.
+Functionality: Monitors alert administrators and users about potentially malicious certificates.
+Auditors:
+
+Role: Auditors are organizations that verify the compliance of CAs with CT requirements.
+Functionality: Auditors ensure that CAs are logging all certificates and that the logs are functioning correctly.
+Browsers and Clients:
+
+Role: Browsers and other clients use CT information to verify the validity and integrity of certificates.
+Functionality: Clients check CT logs to ensure that certificates are legitimate and have not been issued fraudulently.
+Key Processes
+Certificate Issuance:
+
+Request: A domain owner requests a certificate from a CA.
+Validation: The CA validates the domain owner’s identity and control over the domain.
+Issuance: Upon validation, the CA issues the certificate and includes a Signed Certificate Timestamp (SCT) in the certificate.
+Signed Certificate Timestamp (SCT):
+
+Role: An SCT is a cryptographic signature from a CT log that confirms the inclusion of a certificate in the log.
+Process: When a CA issues a certificate, it sends the certificate to one or more CT logs. The log returns an SCT, which the CA includes in the certificate.
+Logging:
+
+Role: CT logs store all certificates issued by CAs along with their SCTs.
+Process: Logs are append-only, meaning once a certificate is added, it cannot be removed or altered. Logs are publicly accessible and immutable.
+Monitoring:
+
+Role: Monitors continuously check CT logs for suspicious or fraudulent certificates.
+Process: Monitors use various techniques to detect anomalies, such as certificates issued to unauthorized domains or certificates with unusual characteristics.
+Auditing:
+
+Role: Auditors verify the compliance of CAs with CT requirements.
+Process: Auditors conduct regular checks to ensure that CAs are logging all certificates and that the logs are functioning correctly. Auditors also ensure that logs are publicly accessible and immutable.
+Validation by Clients:
+
+Role: Browsers and other clients use CT information to verify the validity and integrity of certificates.
+Process: When a client establishes a secure connection with a server, it checks the certificate’s SCTs against CT logs to ensure the certificate is legitimate and has not been issued fraudulently.
+Benefits
+Detection of Fraudulent Certificates:
+
+CT helps detect and prevent the issuance of fraudulent certificates by ensuring that all certificates are publicly logged and can be audited.
+Improved Transparency:
+
+CT logs provide transparency into the certificate issuance process, allowing anyone to verify the legitimacy of a certificate.
+Enhanced Security:
+
+By ensuring that certificates are logged and monitored, CT helps protect against man-in-the-middle attacks and other security threats.
+Accountability:
+
+CT holds CAs accountable for the certificates they issue, as any misissued certificates can be detected and reported.
+Trust in SSL/TLS:
+
+CT enhances trust in the SSL/TLS ecosystem by providing a mechanism to verify the integrity and legitimacy of certificates.
+Key Concepts
+Signed Certificate Timestamp (SCT):
+
+An SCT is a cryptographic signature from a CT log that confirms the inclusion of a certificate in the log. It is included in the certificate by the CA.
+Public CT Logs:
+
+CT logs are publicly accessible and immutable logs that record all certificates issued by CAs. They are designed to be transparent and verifiable.
+Monitors:
+
+Monitors are independent entities that continuously check CT logs for suspicious or fraudulent certificates. They alert administrators and users about potentially malicious certificates.
+Auditors:
+
+Auditors are organizations that verify the compliance of CAs with CT requirements. They ensure that CAs are logging all certificates and that the logs are functioning correctly.
+Append-Only Logs:
+
+CT logs are append-only, meaning once a certificate is added, it cannot be removed or altered. This ensures the integrity and immutability of the logs.
+"
+K8S,"The cluster components
+The architectural design of Kubernetes is grounded on the principle of ephemeral and independent objects that are interlinked. The following diagram highlights the two main components of a Kubernetes cluster: the control plane and the worker nodes. They contain a series of subcomponents, as shown in the illustration.
+
+Control plane
+The Kubernetes control plane operates as the chief node of the cluster, overseeing the worker nodes. It functions as the central nervous system, maintaining the intricate structure in an operational and optimal state. The following are its main components:
+
+Kube-apiserver. The API server, an integral part of the Kubernetes control plane, serves as the gateway to the Kubernetes API. It functions as the user interface for the Kubernetes control plane by sending and receiving API calls.
+Etcd. This is the heart of the cluster, the database where Kubernetes stores all its internal information. It serves as Kubernetes' repository for all cluster data, such as which nodes are part of the cluster and which resources exist. The key-value store is both reliable and always accessible.
+Kube-scheduler. This component monitors the creation of new pods that have yet to be allocated to any node, and it designates a node for them to operate on. It decides where the pods will run.
+Kube-controller-manager. This is responsible for various internal tasks of the cluster via its controller processes such as node controller, pod controller, and service controller, among others.
+Cloud-controller-manager. This is a component that incorporates control logic specific to the cloud. It enables integration of the cluster with the cloud provider's API. It also interacts with cloud providers, managing resources such as load balancers and disk volumes.
+Worker nodes
+If the control plane is considered as the operation's nerve center, the worker nodes are akin to the system's brawn. They execute and manage all the pods and containers within the cluster. The cluster can contain anywhere from zero to numerous worker nodes, though it is generally not recommended to operate the pods on the same node as the control plane. The following are the main worker node components:
+
+Kubelet. This is an agent operating on every node within the cluster. Its primary role is to ensure that containers within a pod are functioning correctly. It is responsible for monitoring if the container runtime runs containers when necessary and collecting execution information.
+Kube-proxy. This is a network proxy that operates on every node within the cluster. It manages network communication, allowing different containers to communicate with each other. It is also responsible for external requests.
+Container runtime. This refers to the piece of software responsible for executing containers. It is also the container runtime creates and runs the containers themselves, which are usually Docker, containerd, or CRI-O.
+Ports and protocols
+Understanding the ports and protocols utilized by Kubernetes components can be beneficial when operating the system, especially in a setting with stringent network parameters such as a physical data center with network firewalls or virtual networks within a public cloud. The following is a summary of the ports and protocols for the control plane and the worker nodes, respectively.
+
+The Kube API server
+As mentioned, the Kube API server is the gateway to the Kubernetes API and provides access to both users and service accounts. All communication is encrypted via TLS and provided via port 6443 (443 for managed Kubernetes) by default.
+
+Authentication (AuthN)
+Authorization (AuthZ)
+Admission Control
+In our previous articles, we have consistently warned about the dangers of publicly exposed Kubernetes clusters. Still, unless no authentication is enabled or there is a vulnerability in the cluster, there is only so much an attacker can do with unauthenticated access to the kube-apiserver. Here are some API endpoints that accept unauthenticated (anonymous) API requests:
+
+/version
+/healthz
+/livez
+/readyz
+In this case, most companies limit their cluster to being accessible only via specific IP addresses or Classless Inter-Domain Routing (CIDR) ranges, such as a virtual private network (VPN) or the company’s internal network. This reduces the attack surface and limits the blast radius in the event of a compromise.
+
+The kubelet
+The kubelet is the agent deployed on every node of the cluster, ensuring that all containers in a pod are operational. It also serves as the agent responsible for implementing node configuration modifications. While it might not be depicted in the principal Kubernetes architecture diagram, even the master node operates a kubelet (and a kube-proxy) agent, permitting the potential execution of additional pods there. However, this practice isn't typically recommended because the containers running Kubernetes and the containers managing the user’s applications should be separated.
+
+By default, port 10250 is utilized by the kubelet API and is open across all nodes within a cluster, encompassing both the API server control plane and worker nodes. Typically, this port is only visible internally and can't be reached by external services. Outside any other authentication method blocking them, requests to the kubelet's API endpoint are considered anonymous by default. One of the undocumented endpoints of the kubelet API is /runningpods, which provides information about all active pods on the node where the kubelet resides. There's also a /run endpoint, which allows users to execute commands directly on the pods.
+
+The security settings of the kubelet hinge on three pivotal elements:
+
+Activating Kubelet authentication. As stated in the Kubernetes documentation, requests made to the Kubelet's API endpoint default to anonymous requests, provided other authentication methods don't block them. Launching the kubelets with the --anonymous-auth=false flag is advisable to deactivate anonymous access. For a more in-depth understanding, refer to the official Kubernetes guidelines on Kubelet authentication.
+Limiting kubelet permissions to safeguard kubelet credentials. Doing so protects the credentials from potential attackers who might attempt to execute harmful actions after escaping from the container.
+Regularly changing the kubelet certificates. In a security breach, these short-lived certificates can help limit potential damages.
+
+The etcd
+Etcd serves as the primary storage destination for the cluster, housing all cluster objects. Due to its hierarchical and standardized structure, Kubernetes deployments utilize etcd for preserving REST API objects and installation configurations. An exposed etcd can inadvertently lead to significant data leakage. Regrettably, misconfigured etcd instances remain widespread, with over 4,000 of such exposed services detected on Shodan this year. If an attacker circumvents the API server and directly manipulates objects within etcd, it would equate to unrestricted access to the entire cluster. The intruder could create pods, access secrets, and view sensitive information like user credentials. To mitigate this risk, it's essential to enable encryption in transit and ensure encryption at rest to prevent data leakage or unauthorized alterations to the etcd data. Fortunately, most managed Kubernetes services offer this option or enable it by default."
+CI/CD,"Continuous integration (CI) is the practice of integrating source code changes frequently and ensuring that the integrated codebase is in a workable state.
+
+Typically, developers merge changes to an integration branch, and an automated system builds and tests the software system. Often, the automated process runs on each commit or runs on a schedule such as once a day.
+
+Grady Booch first proposed the term CI in 1991, although he did not advocate integrating multiple times a day, but later, CI came to include that aspect.
+
+Build automation
+Main article: Build automation
+Build automation is a best practice. Build automation tools automate building.
+
+Proponents of CI recommend that a single command should have the capability of building the system.
+
+Automation often includes automating the integration, which often includes deployment into a production-like environment. In many cases, the build script not only compiles binaries but also generates documentation, website pages, statistics and distribution media (such as Debian DEB, Red Hat RPM or Windows MSI files).
+
+Atomic commits
+CI requires the version control system to support atomic commits; i.e., all of a developer's changes are handled as a single commit.
+
+Committing changes
+When making a code change, a developer creates a branch that is a copy of the current codebase. As other changes are committed to the repository, this copy diverges from the latest version.
+
+The longer development continues on a branch without merging to the integration branch, the greater the risk of multiple integration conflicts and failures when the developer branch is eventually merged back. When developers submit code to the repository they must first update their code to reflect the changes in the repository since they took their copy. The more changes the repository contains, the more work developers must do before submitting their own changes.
+
+Eventually, the repository may become so different from the developers' baselines that they enter what is sometimes referred to as ""merge hell"", or ""integration hell"", where the time it takes to integrate exceeds the time it took to make their original changes.
+
+Testing locally
+Proponents of CI suggest that developers should use test-driven development and to ensure that all unit tests pass locally before committing to the integration branch so that one developer's work does not break another developer's copy.
+
+Incomplete features can be disabled before committing, using feature toggles.
+
+Continuous delivery and continuous deployment
+Continuous delivery ensures the software checked in on an integration branch is always in a state that can be deployed to users, and continuous deployment automates the deployment process.
+
+Continuous delivery and continuous deployment are often performed in conjunction with CI and together form a CI/CD pipeline.
+
+Version control
+Main article: Version control
+Proponents of CI recommend storing all files and information needed for building in version control, (for git a repository); that the system should be buildable from a fresh checkout and not require additional dependencies.
+
+Martin Fowler recommends that all developers commit to the same integration branch.
+
+Commit frequently
+Developers can reduce the effort of resolving conflicting changes by synchronizing changes with each other frequently; at least daily. Checking in a week's worth of work risks conflict both in likelihood of occurrence and complexity to resolve. Relatively small conflicts are significantly easier to resolve than larger ones. Integrating (committing) changes at least once a day is considered good practice, and more often better.
+
+Daily build
+Building daily, if not more often, is generally recommended.
+
+Every commit should be built
+The system should build commits to the current working version to verify that they integrate correctly. A common practice is to use Automated Continuous Integration, although this may be done manually. Automated Continuous Integration employs a continuous integration server or daemon to monitor the revision control system for changes, then automatically run the build process.
+
+Every bug-fix commit should come with a test case
+When fixing a bug, it is a good practice to push a test case that reproduces the bug. This avoids the fix to be reverted, and the bug to reappear, which is known as a regression.
+
+Keep the build fast
+The build needs to complete rapidly so that if there is a problem with integration, it is quickly identified.
+
+Test in a clone of the production environment
+Main article: Test environment
+Having a test environment can lead to failures in tested systems when they deploy in the production environment because the production environment may differ from the test environment in a significant way. However, building a replica of a production environment is cost-prohibitive. Instead, the test environment or a separate pre-production environment (""staging"") should be built to be a scalable version of the production environment to alleviate costs while maintaining technology stack composition and nuances. Within these test environments, service virtualisation is commonly used to obtain on-demand access to dependencies (e.g., APIs, third-party applications, services, mainframes, etc.) that are beyond the team's control, still evolving, or too complex to configure in a virtual test lab.
+
+Make it easy to get the latest deliverables
+Making builds readily available to stakeholders and testers can reduce the amount of rework necessary when rebuilding a feature that doesn't meet requirements. Additionally, early testing reduces the chances that defects survive until deployment. Finding errors earlier can reduce the amount of work necessary to resolve them.
+
+All programmers should start the day by updating the project from the repository. That way, they will all stay up to date.
+
+Everyone can see the results of the latest build
+It should be easy to find out whether the build breaks and, if so, who made the relevant change and what that change was.
+
+Continuous delivery (CD) is a software engineering approach in which teams produce software in short cycles, ensuring that the software can be reliably released at any time. It aims at building, testing, and releasing software with greater speed and frequency. The approach helps reduce the cost, time,and risk of delivering changes by allowing for more incremental updates to applications in production. A straightforward and repeatable deployment process is important for continuous delivery.
+
+Continuous delivery is enabled through the deployment pipeline. The purpose of the deployment pipeline has three components: visibility, feedback, and continually deploy.
+
+Visibility – All aspects of the delivery system including building, deploying, testing, and releasing are visible to every member of the team to promote collaboration.
+Feedback – Team members learn of problems as soon as possible when they occur so that they are able to fix them as quickly as possible.
+Continually deploy – Through a fully automated process, you can deploy and release any version of the software to any environment.
+
+According to Yan Cui, when it comes to serverless environments, ephemeral resources should be kept together and have their own deployment pipeline to achieve a high cohesion. However, shared resources that have a long spin-up time and landing zone should have their own separate repository, deployment pipeline and stack. 
+
+Tools/tool types
+Continuous delivery takes automation from source control all the way through production. There are various tools that help accomplish all or part of this process. These tools are part of the deployment pipeline which includes continuous delivery. The types of tools that execute various parts of the process include: continuous integration, application release automation, build automation, application lifecycle management.
+
+Architecting for continuous delivery
+To practice continuous delivery effectively, software applications have to meet a set of architecturally significant requirements (ASRs) such as deployability, modifiability, and testability. These ASRs require a high priority and cannot be traded off lightly.
+
+Microservices are often used when architecting for continuous delivery. The use of Microservices can increase a software system's deployability and modifiability. The observed deployability improvements include: deployment independence, shorter deployment time, simpler deployment procedures, and zero downtime deployment. The observed modifiability improvements include: shorter cycle time for small incremental functional changes, easier technology selection changes, incremental quality attribute changes, and easier language and library upgrades.
+
+Continuous deployment (CD) is a software engineering approach in which software functionalities are delivered frequently and through automated deployments.
+
+Continuous deployment contrasts with continuous delivery (also abbreviated CD), a similar approach in which software functionalities are also frequently delivered and deemed to be potentially capable of being deployed, but are actually not deployed. As such, continuous deployment can be viewed as a more complete form of automation than continuous delivery."
+ecs,"How ECS Fargate Works
+Container Definition:
+
+You define the container specifications, including the Docker image, memory, CPU, and other resources required for your application.
+This is done through a container definition, which is a JSON document.
+Task Definition:
+
+A task definition is a blueprint for your application. It includes one or more container definitions and specifies how they should be run together.
+You can also define networking, IAM roles, and other configurations in a task definition.
+Service or Task:
+
+You can run a task directly or use a service to manage and maintain a specified number of task instances running at any given time.
+Services are useful for long-running applications, while tasks are suitable for one-time or periodic tasks.
+Cluster:
+
+A cluster is a logical grouping of tasks and services. In Fargate, you don’t manage the underlying infrastructure, but you still need to create a cluster to run tasks and services.
+Clusters in Fargate are virtual and do not require you to provision or manage EC2 instances.
+Networking:
+
+ECS Fargate uses VPCs (Virtual Private Clouds) to provide network isolation and security.
+You can specify subnets, security groups, and assign public or private IP addresses to your tasks.
+IAM Roles:
+
+ECS tasks can assume IAM roles to grant permissions to access other AWS services.
+This is managed through task execution roles and task roles.
+Logging:
+
+ECS Fargate supports logging to Amazon CloudWatch Logs, which helps in monitoring and troubleshooting.
+"
+PSM,"We give many examples of password extraction in the paper, but as a warm-up we present one
+example here. Consider web sites that serve a login page
+over HTTP, but submit the user’s password over HTTPS
+(a setup intended to prevent an eavesdropper from reading the password but actually leaves the site vulnerable).
+As we show in Section 4, about 17% of the Alexa Top
+500 websites use this setup. Suppose a user, Alice, uses
+a password manager to save her passwords for these sites
+At some point later, Alice connects to a rogue WiFi
+router at a coffee shop. Her browser is directed to a landing page that asks her to agree to the terms of service,
+as is common in free WiFi hotspots. Unbeknownst to
+Alice, the landing page (as shown in Figure 1) contains
+multiple invisible iFrames pointing to the login pages of
+the websites for which Alice has saved passwords. When
+the browser loads these iFrames, the rogue router injects
+JavaScript into each page and extracts the passwords autofilled by the password manager.
+This simple attack, without any interaction with the
+user, can automatically extract passwords from the password manager at a rate of about ten passwords per second. Six of the ten password managers we examined
+were vulnerable to this attack. From the user’s point of
+view, she simply visited the landing page of a free WiFi
+hotspot. There is no visual indication that password extraction is taking place.
+
+We begin with a detailed survey of the autofill policies
+implemented in widely deployed password managers.
+The password managers we survey include:
+• Desktop Browser PMs: Google Chrome 34, Microsoft Internet Explorer 11, Mozilla Firefox 29,
+and Apple Safari 7.
+• 3rd Party PMs: 1Password [1], LastPass [29],
+Keeper [28], Norton IdentitySafe [26], PasswordSafe [32], and KeePass [27]. All of these besides
+PasswordSafe and KeePass provide browser extensions that support password field autofill.
+• iOS PMs: Mobile Safari’s password manager syncs
+with the desktop version of Safari through Apple’s
+iCloud Keychain synchronization service. Since
+mobile Safari does not support extensions, 3rd Party
+PMs are separate applications with their own builtin web browser. In addition to Mobile Safari,
+we survey password managers in Google Chrome,
+1Password, and LastPass Tab.
+• Android PMs: the default Android browser and
+Chrome.
+All these password managers offer an “autofill” functionality, wherein the password manager automatically
+populates the username and password fields within the
+user’s web browser. We divide autofill strategies into two
+broad categories:
+• Automatic autofill: populate username and password fields as soon as the login page is loaded
+without requiring any user interaction. Password
+managers that support automatic autofill include
+Chrome (all platforms), Firefox, Safari, LastPass,
+Norton IdentitySafe, and LastPass Tab.
+• Manual autofill: require some user interaction
+before autofilling. Types of interaction include
+clicking on or typing into the username field,
+pressing a keyboard shortcut, or pressing a button in the browser. Password managers that always require manual interaction include 1Password,
+Keeper, Password Safe, and KeePass.
+Internet Explorer 11 uses a hybrid approach: it automatically autofills passwords on pages loaded over HTTPS,
+but requires user interaction on pages loaded over HTTP.
+We show in Section 4 that even this conservative behavior still enables some attacks.
+Some password managers require manual interaction
+for autofill in specific situations:
+• Chrome requires manual interaction if the password
+field is in an iFrame.
+• Chrome can read passwords stored in Mac OS X’s
+system-wide keychain, but will not automatically
+autofill them until they have been manually selected
+by the user at least once.
+• The first time Safari or Chrome on Mac OS X access a password in the system keychain, a system
+dialog requests permission from the user. If the
+user chooses “Always Allow”, this dialog will not
+be shown again and the password will automatically
+autofill in the future. This dialog does not appear if
+the password was synchronized from another device
+using iCloud Keychain.
+• LastPass and Norton IdentitySafe provide nondefault configuration options to disable automatic
+autofill. In this paper we only discuss the default
+configurations for these password managers.
+2.1 Autofill policies
+Next, we ask what happens when the PM is presented
+with a login page that is slightly different from the login
+page at the time the password was saved. Should the PM
+apply autofill or not? Different PMs behave differently
+and we survey the different policies we found. Table 1
+summarizes some of our findings.
+The domain and path. All password managers we
+tested allow passwords to be autofilled on any page
+within the same domain as the page from which the password was originally saved. For example, a password
+originally saved on https://www.example.com/aaa.
+php would be filled on https://www.example.com/
+bbb.php. This allows autofill to function on sites that
+display the login form on multiple pages, such as in a
+page header visible on all pages. It also allows autofill
+after a site redesign that moves the login form.
+This feature means that an attacker can attack the
+password manager (as in Section 4) on the least-secure
+page within the domain. It also means that two sites
+hosted on the same domain (ie, example.edu/~jdoe
+and example.edu/~jsmith) are treated as a single site
+by the password manager.
+Protocol: HTTP vs. HTTPS. Suppose the password
+was saved on a login page loaded over one protocol (say,
+HTTPS), but the current login page is loaded over a
+different protocol (say, HTTP)? All other elements of
+the URL are the same, including the domain and path.
+Should the password manager autofill the password on
+the current login page?
+Chrome, Safari, Firefox, and Internet Explorer all
+refuse to autofill if the protocol on the current login page
+is different from the protocol at the time the password
+was saved. However, 1Password, Keeper, and LastPass
+all allow autofill after user interaction in this case. Note
+that LastPass normally uses automatic autofill, so this
+downgrade to manual autofill on a different protocol was
+implemented as a conscious security measure. Norton
+IdentitySafe does not pay attention to the protocol. It automatically autofills a password saved under HTTPS on
+a page served by HTTP. As we show later on, any form
+of autofilling, manual or not, is dangerous on a protocol
+change.
+Modified form action. A form’s action attribute specifies where the form’s contents will be sent to upon submission.
+<form action=""example.com"" method=""post"">
+One way an attacker can steal a user’s password is to
+change the action on the login form to a URL under the
+attacker’s control. Therefore, one would expect password managers to not autofill a login form if the form’s
+action differs from the action when the password was
+first saved.
+We consider two different cases. First, suppose that
+at the time the login page is loaded the form’s action
+field points to a different URL than when the password was first saved. Safari, Norton IdentitySafe and
+IE (on HTTPS pages) nevertheless automatically autofill
+the password field. Desktop Chrome and IE (on HTTP
+pages) autofill after some manual interaction with the
+user. LastPass asks for user confirmation before filling
+a form whose action points to a different origin than the
+current page.
+Second, suppose that at the time the login page is
+loaded the form’s action field points to the correct URL.
+However, JavaScript on the page modifies the form action field so that when the form is submitted the data is
+sent to a different URL. All of the password managers
+we tested allow an autofilled form to be submitted in this
+case even though the password is being sent to the wrong
+location. We discuss the implications of this in Section 4
+and discuss mitigations in Section 5.
+Password managers without automatic autofill require
+user interaction before filling the form, but none give
+any indication to the user that the form’s action does not
+match the action when the credentials were first saved.
+Since a form’s action is normally not visible to the user,
+there is no way for the user to be sure that the form was
+submitting to the place the user intended.
+The effects of the action attribute on autofill behavior
+is captured in the third and fourth columns of Table 1.
+Autocomplete attribute A website can use the autocomplete attribute to suggest that autocompletion be disabled for a form input [44]:
+<input autocomplete=""off"" ... >
+We find that Firefox, Mobile Safari, the default Android Browser, and the iOS version of Chrome respect
+the autocomplete attribute when it is applied to a password input. If a password field has its autocomplete attribute set to “off”, these password managers will neither
+fill it nor offer to save new passwords entered into it. All
+of the other password managers we tested fill the password anyway, ignoring the value of the autocomplete attribute. LastPass ignores the attribute by default, but provides an option to respect it.
+Once the password manager contains a password for a
+site, the autocomplete attribute does not affect its vulnerability to the attacks presented in this paper. As described
+in Section 4, in our setting, the attacker controls the network and can modify the login form to turn the password
+input’s autocomplete attribute on even if the victim website turns it off.
+In supporting browsers, the autocomplete attribute can
+be used to prevent the password from being saved at all.
+This trivially defends against our attacks, as they require
+a saved password. However, it is not a suitable defense in
+general due to usability concerns. A password manager
+that doesn’t save or fill passwords will not be popular
+amongst users.
+Broken HTTPS behavior. Suppose the password was
+saved on a login page loaded over a valid HTTPS connection, but when visiting this login page at a later time
+the resulting HTTPS session is broken, say due to a bad
+certificate. The user may choose to ignore the certificate
+warning and visit the login page regardless. Should the
+password manager automatically autofill passwords in
+this case? The desktop and Android versions of Chrome
+refuse to autofill passwords in this situation. IE downgrades from automatic to manual autofill. All other password managers we tested autofill passwords as normal
+when the user clicks through HTTPS warnings. As we
+will see, this can lead to significant attacks.
+Modified password field name. All autofilling password managers, except for LastPass, autofill passwords
+even when the password element on the login page has a
+name that differs from the name present when the password was first saved. Autofilling in such situations can
+lead to “self-exfiltration” attacks, as discussed in Section 5.2.1. LastPass requires manual interaction before
+autofilling a password in a field whose name is different
+from when the password was saved.
+2.2 Additional PM Features
+Several password managers have the following security features worth mentioning:
+iFrame autofill. Norton IdentitySafe, Mobile Safari
+and LastPass Tab do not autofill a form in an iFrame that
+is not same-origin to its parent page. Desktop Chrome requires manual interaction to autofill a form in an iFrame
+regardless of origin. Chrome for iOS and the Android
+browser will never autofill an iFrame. Firefox, Safari,
+and Chrome for Android automatically autofill forms in
+iFrames regardless of origin.
+Safari and Mobile Safari will only autofill a single login form per top-level page load. If a page, combined
+with all of its iFrames, has more than one login form,
+only the first will be autofilled.
+We discuss the impact of these policies on security in
+Section 4.
+Visibility. Norton IdentitySafe does not automatically
+autofill a form that is invisible because its CSS display
+attribute is set to “none” (either directly or inherited from
+a parent). However, it will automatically autofill a form
+with an opacity of 0. Therefore, this defense does not
+enhance security.
+Autofill method. KeePass is unique amongst desktop
+password managers in that it does not integrate directly
+with the browser. Instead, it can “autotype” a sequence
+of keystrokes into whatever text field is active. For most
+login forms, this means it will type the username, the
+Tab key, the password, then the Enter key to populate
+and submit the form.
+Autofill and Submit. 1Password, LastPass, Norton
+IdentitySafe, and KeePass provide variants of “autofill
+and submit” functionality, in which the password managers not only autofills a login form but also automatically submits it. This frees the user from interacting with
+the submit button of a login form and thus makes autofill
+more convenient for the user.
+"
+IoT_sc,"2.1 SUPPLY CHAIN REFERENCE MODEL FOR IOT
+The IoT supply chain includes the actors, processes and assets that participate in the realization (e.g. development, design, maintenance, patch management) of any IoT device.
+This study considers the supply chain for IoT is composed of two main aspects: the physical aspect and the logic aspect. The physical supply chain relates to all the physical objects (e.g. devices, electronic components, appliances) moved through the supply chain phases, as well as the associated manual processes (e.g. manual assembly, distribution processes). The logic aspect of the supply chain for IoT is associated with the software development and deployment, network-based communications, and virtual interactions between the IoT objects and the supply chain stakeholders.
+IoT supply chain risks, and more generally IT supply chain risks, are associated with an organisation’s decreased visibility into, and understanding of, how the technology they employ in their product or solution is developed, integrated, and deployed3. An overview of the IoT supply chain is provided , presenting all its different stages with a detailed mapping of them that can be found after the following subsections. This aims to give an approximation of the stages sequence and the interactions between actors to identify where the security concerns might arise.
+Although the stage layers are presented as being separated, it should be taken into account that sometimes they are treated as a single entity due to project constraints or other business realities.
+
+2.1.1 Conceptual Phase
+During this phase, the products and services are conceptually designed. This includes both software and hardware units, as well as other services that may be involved. This early stage is important to define and establish the basic security foundations that will be part of the requirements during the subsequent stages in the supply chain. Security at the design phase is critical as some cost-driven decisions or mistakes at this stage may result in security flaws in the final product.
+This phase contains the design of security models. Physical and digital assets are inextricably linked in the IoT domain—a security model for the IoT supply chain should merge both physical safety and digital security.
+Requirements are also specified at the conceptual stage. One of the main challenges is the harmonization of the different disciplines (e.g. hardware engineering, security engineering, business) to achieve proper security in the IoT product while properly considering all the requirements. One other challenge is the understanding the target environment. For ‘general purpose’ devices there is likely to be a wide range of target environments, all exhibiting different risks and therefore expressing different risk appetite Finally, it should be noted that the investment of resources in the conceptual and development phases tends to contribute to minimize the cost of making an error in later stages.
+2.1.2 Development Phase
+Broadly speaking the Development Phase consists of a wide range of tasks that span from semiconductor fabrication to firmware programming and whose main objective is producing a physical device ready to ship to customers. Development of software services and platforms required for the operation and deployment of IoT devices are also included in this phase. This is one of the most critical phases as most of the risks and threats arise from poor decisions, omissions or mistakes at this point.
+As is the case with the conceptual phase, the lack of visibility of the development-related differences (e.g. timelines, needs) between the different teams (e.g. software, security) can have a significant and negative impact on security.
+On a deeper level, a typical IoT device will go through many steps during the Development Phase. Those steps can roughly be categorized under Hardware and Software, with the former consisting mainly in semiconductor fabrication (according to design guidelines), PCB manufacturing, component integration and functional testing; while the latter involves components like on-chip microcode, operating systems, middleware, third-party libraries, cloud services integration and several development tools.
+The number of actors involved in this stage can be potentially very high. For example, semiconductor manufacturers, PCB integrators, security engineers, device assembly and packaging and developers (micro-code, firmware, operating systems, middleware, libraries).
+2.1.3 Production Phase
+This phase involves mass production, distribution, and logistics. A significant percentage of IoT devices use multiple units from different vendors and thus require a wide, and often complex, supply chain. This usually leads to a multi-faceted logistic challenge, where keeping track of all the stages and sources is not an easy task.
+This phase is linked with the support and retirement phases, as the challenges that are involved in the initial distribution resurface when products have to be retrieved due to malfunction or to be disposed of.
+The IoT supply chain production phase may be defined as the effort needed to efficiently and securely deliver while keeping track of all the units in IoT devices. Typically, this involves several different actors: shipping, warehousing, inventory management, delivery fleet operation, packaging, handling and customer support, among others.
+2.1.4 Utilisation Phase
+Although it depends greatly on the type of device and services provided, the Utilisation Phase contains all those tasks required to get the device up and running at the customer final location.
+For a typical device this usually involves tasks ranging from delivery to the customer or retailers, physical installation at the operating location, device initial set-up, establishing secure user credentials both at device level and remote services, pairing with mobile devices, data collection/sharing agreements up to cloud/3rd-party services.
+As is the case in the other phases, the complexities of the supply chain require a significant number of potential actors to be involved in this phase. For example, logistics companies to transport IoT products, retailers, technicians to participate in the deployment process or cloud service providers that offer the services that serve as building blocks of IoT platforms. These actors are usually also involved in the following support and retirement phases.
+2.1.5 Support Phase
+When thinking about the support phase in the life cycle of a product, we always tend to think in repairing damages or fixing issues. From the perspective of the supply chain in IoT devices this often means repairing or replacing damaged units. The IoT devices are very susceptible to damage and malfunctions, as such the IoT suppliers usually have a good size team working as support of their product, that work closely with the developers and users if needed.
+But there is another very important part of the support phase that revolves around the constant supervision of the unit’s security. This part is mainly divided between maintaining updates4 for the devices (firmware, software and libraries) and remote support.
+For this phase of the supply chain, the report is focusing on the continuous prevention aspect.The majority of the IoT devices are widespread and usually have various components with different origins. This makes it even harder to ensure the security of the devices, and even presents threats to the functionality of the product. This is why a lot of security measures and good practices have been centred around this phase, using different technologies and standards to ensure a correct support of the IoT devices through its life cycle.
+2.1.6 Retirement Phase
+The final phase of a product consists in a series of steps to ensure that the disposal of the IoT device is done securely. One of the key aspects of this phase is the secure removal of the information in the device5.
+If needed, another step in the disposal of a device is its physical destruction. This presents challenges not only in the cyber-security department but also logistics and environmental concerns, as electronics wastes involve a great deal of contamination problems. One of these problems is the scarcity of some of the materials used in creating them, so an important part of the retirement process is the recycling of the devices.
+So, the retirement process can be summarized as the recycling of the devices in economically feasible and environmentally friendly ways while adhering to security and privacy standards.
+Another important breach in security is added when the device is not completely taken out of circulation but instead is repurposed or refurbished. When reused, there is again a strong need for information erasing, but also extra measures must be taken to ensure that the product can fit into its new use.
+2.2 DESCRIPTION OF IOT SUPPLY CHAIN STAGES
+This section contains brief descriptions of each of the stages in the IoT supply chain. All of them are relevant from a security standpoint and should be considered in the security process.
+2.2.1 Product Design
+The first stage includes the generation of the required design resources for both hardware and software components before proceeding to fabrication and development stages. This process
+shall take into account security features to support a secure supply chain (e.g. secure root of trust, process isolation for trusted software). The design of IoT products tends to be complex due to the highly coupled nature of the relationship between hardware and software—these products usually have restrictive constraints (e.g. cost, size) and are based on hardware platforms specifically tailored to the scenario.
+Design tasks in the software domain include, for example, gathering functional and non-functional requirements, producing initial versions of threat models, designing architectures, defining the technology stack and developing small-scale proof-of-concepts to assess viability. On the other hand, hardware requires producing schematics for PCBs (Printed Circuit Boards) and mechanical elements using ECAD (Electronic Computer-Aided Design) and MCAD (Mechanical Computer-Aided Design) tools. Schematics can then be validated using simulation processes (e.g. thermal).
+The product design phase is significantly challenging due to the fact that is forces designers to think long-term and consider multiple future issues and possibilities (e.g. how to deal with remote management of credentials when a root of trust is implemented). On the other hand, it is comparatively easy to verify.
+2.2.2 Semiconductor Fabrication
+Developments in the semiconductor fabrication field have played a major role in the recent growth of the IoT domain, increasing the capabilities and computational resources of devices with low power consumption and small form factor requirements.
+The fabrication stage includes the chemical processes involved in transforming raw semiconductor materials into silicon wafers; the production of the masks containing patterns that will be transferred to the silicon wafers after being irradiated with UV light; and what is commonly known as the IC (Integrated Circuit) frontend process. Two distinct and consecutive steps can be identified in this process: FEOL (Front End-Of-Line) refers to the first part where individual electrical components (e.g. transistors, capacitors) are formed on the silicon, while BEOL (Back End-Of-Line) is the second part where interconnections are formed between components.
+With the shortage of materials being an increasingly pressing issue, the competition for the access to resources has intensified. Additionally, it should be noted that the separation lines between fabrication and manufacturing phases are often blurred. Actors such as foundries can sometimes offer services beyond their expected scope, benefiting from a stronger integration between steps in the semiconductor chain to optimize costs. The Semiconductor Fabrication and Component Manufacturing stages could therefore be considered as a single unit depending on the specific case. Furthermore, another reasonable model of the IoT supply chain could even group the fabrication and manufacturing stages under the initial design phase due to their low-level nature.
+Not all IoT projects require the design and fabrication of ad-hoc ICs; many products can be based on off-the-shelf chips to avoid dealing with the high barriers and costs of entry of low-level semiconductor fabrication (which is only cost-efficient on projects with a high volume of devices).
+Unlike the product design stage, the fabrication and manufacturing stages tend to be more difficult to verify—this has the side effect of increasing challenges from a security perspective.
+2.2.3 Component Manufacturing
+This stage is comprised of the tasks that are necessary to arrive at a production-ready IC after the electrical components and interconnections are formed on the wafers during the Semiconductor Fabrication stage. These steps include separation of each individual die from the silicon wafer, and packaging of the die into the final physical IC container for protection and usage. Extensive testing is also involved6 to validate and ensure that ICs meet the performance requirements.
+PCB manufacturing is another common task that is included in this stage. Unlike ad-hoc ICs, many IoT projects require the design of custom PCBs that serve as an interconnection platform for components such as microcontrollers, FPGAs or physical connectors. The PCB only provides the substrate and interconnection tracks, the actual components are assembled on the next stage.
+2.2.4 Component & Embedded Software Assembly
+In this stage electronic components are mounted and soldered on the PCBs. This process may be manual or automated, depending on the capabilities of the assembly pipeline and the type of the components—through-hole components tend to be manually soldered, while SMDs (Surface-Mount Devices) can be automatically placed by specialized machinery.
+Software modules or pieces of information that are integral to the units and are not directly related to the actual IoT application logic (developed in later stages) are loaded and initialized in this phase. Two distinct types of initialization may be identified: one type includes modules that are the same for the entire range of devices (e.g. bootloader, firmware); the other includes modules that change on a per device basis (e.g. device ID). It should be noted that this is logically separated from the setup that takes part during the service provision stage.
+Finally, devices are integrated into their physical enclosures and packaged for distribution to end users or intermediary VARs (Value-Added Resellers).
+Security challenges in this stage arise from the combinations of the same software running with different configurations in different hardware platforms. The impact of different hardware platforms in software safety and reliability needs to be evaluated, although this is a hard process.
+2.2.5 Device Programming
+This stage can be defined as all the tasks geared towards writing, testing and deploying functional software on all the components of an IoT device. Depending on the complexity of the device and the number of different components these tasks might require developing software at several layers: low-level firmware (e.g. bootloader)7, drivers, networking/communication stacks, Operating System, Middleware (e.g. web server), user GUI.
+This stage can potentially span along most of the lifecycle of the product as part of the development team is usually involved in the support phase: fixing detected flaws, implementing new features or simply working alongside the maintenance team in keeping online/cloud services fully operational.
+2.2.6 IoT Platform Development
+An IoT platform is comprised of all the services that are required for the operation and support of a fleet of IoT devices. These services tend to be centralized in nature, providing intelligence and capabilities that cannot be implemented in a local fashion in the IoT devices (e.g. due to constrained resources). The following list contains some examples of IoT platform services:
+ Identification and authorization services.
+ Streaming platforms for the ingestion of data flows originated on the IoT devices. Processing pipelines are usually included to clean, analyse and persist the data.
+ Services for the provisioning of the environment and configuration of IoT devices.
+ APIs for the exposition of historical data or events.
+ Gateways or bridges for the adaptation and translation of protocols.
+Tasks involved in this stage are commonly a combination of the development of ad-hoc projects tailored for the specific context of use, and the integration of third-party APIs and services—whether exposed on the cloud following the SaaS model (Software as a Service) or installed in private servers. It is important to note that the endorsement of third-party software is a significant security challenge for all stages related to software development.
+2.2.7 Distribution & Logistics
+From the end-user point of view the classical definition of distribution and logistics is about how to make the goods reach the customer quickly and reliably. However, most IoT devices use many components and services from different vendors and so require a wide, and often complex, supply chain. This usually leads to a multi-faceted logistic challenge, where keeping track of all the stages is not an easy task.
+With this in mind we can define IoT supply chain distribution and logistics as the effort needed to efficiently and securely deliver while keeping track of all the components in IoT devices8. Typically, this involves several different tasks and actors: shipping, warehousing, inventory management, delivery fleet operation, packaging and handling among others.
+2.2.8 Service Provision & End-User Operation
+This term is usually applied to the initial steps to be taken in order to bring an IoT device to a fully operational state at the customer site (once the physical installation is completed). This usually requires device initialization, user/application account set-up, networking set-up, cloud services enrolment and any further custom/ad-hoc device configuration. It is one of the critical stages at which proper security practices must be enforced, especially by the end-user.
+There are many approaches to the service provisioning procedure: End-user driven (either via manuals or software-based wizards), technician driven (a skilled staff set-up all required services asking the customer key configuration items) or automatic (device shipped totally/partially pre-configured or remote configuration retrieval upon device boot).
+Three additional sub-stages could be identified: Provision of Public Key Infrastructure, Evaluation and Certification for Security and Safety, and Third-party and Independent Security and Safety Assessments. These could be considered as separate stages but are included here for simplicity.
+2.2.9 Technical Support & Maintenance
+Support and maintenance can be defined as the series of actions and processes that are taken during the device life cycle to keep the IoT product from degrading and ensuring it fulfils its purpose according to the requirements (i.e. functional, security) in the face of the passage of time or unexpected developments (e.g. software bugs, zero day vulnerabilities).
+Support and maintenance processes can be classified in two categories, remote and local. The former leverages network infrastructure and techniques like secure firmware or credential updates to achieve its goal and could be considered more cost-effective. However, the sensitivity of the information involved can sometimes pose a big challenge that may require of the physical approach. An example challenge could be remotely revoking and updating device credentials using a communication channel enabled by those same credentials.
+In the case of a technical support instance due to a proactive request from the user's part, the assigned technician fixes the issue by either guiding the user in the required steps (e.g. delivering a software update) or remotely connecting to the device. The opportunities for remote assistance—and the related beneficial cost implications—are defined by the capabilities established in the product design stage.
+Occasionally some issues cannot be fixed and require a full or partial product replacement. In this case the device recovery and service provisioning stages are clearly interlinked with the support stage.
+From the staff point of view the support effort can be structured in tiers, usually starting with first line operators trained to deal with the most common problems down to highly skilled technicians with expertise in a particular area.
+Providing proper support for IoT devices can help in addressing the issues that may arise even in the presence of a good design. Furthermore, a good design has a big impact in keeping the volume of said issues to an acceptable level.
+2.2.10 Device Recovery & Repurpose
+This stage can be defined as the procedure followed after a device has reached the end of the operational life at a particular location. Depending on its condition (or customer needs) the device will be scrapped and recycled or repurposed to start a new operational cycle at a different location. In case of device repurpose it must be provisioned again.
+The recovery procedure can involve several operations at two different levels. Examples in the software domain include data retrieval for archiving purposes, user data erasure9, full wipe and operating system installation. Some operations are also usually required on the IoT platform backend such as revoking credentials or access permissions. On the other hand, hardware operations include destruction of storage media, recycling of components or raw materials and biological sanitization.
+2.3 MAPPING OF THE IOT SUPPLY CHAIN
+Whereas the previous section presented an overview of the general phases of supply chain, the mapping below provides a visualization of the more detailed activities specific to the stages of the supply chain for IoT. It also helps to develop a linear understanding of the correlation between subsequent phases
+"
+Trinity,"Trinity Wallet is a popular open-source wallet for the IOTA cryptocurrency, designed to provide a user-friendly interface for managing IOTA tokens. Here’s a detailed breakdown of how Trinity Wallet works:
+
+1. Architecture Overview
+Trinity Wallet is built on a modular architecture, separating the user interface (UI) from the backend logic. This separation allows for easier maintenance and development of new features.
+
+2. User Interface (UI)
+The UI is typically built using web technologies such as HTML, CSS, and JavaScript. This allows the wallet to be cross-platform, running on various devices including desktops, tablets, and smartphones. The UI provides a graphical interface for users to interact with their IOTA tokens, including sending and receiving transactions, viewing balances, and managing accounts.
+
+3. Backend Logic
+The backend logic handles the core functionalities of the wallet, such as generating addresses, signing transactions, and interacting with the IOTA network. This logic is often implemented in a programming language like JavaScript, leveraging libraries and frameworks that facilitate interaction with the IOTA network.
+
+4. Local Storage
+Trinity Wallet stores user data locally on the device to ensure security and privacy. This includes seed phrases, addresses, and transaction history. The wallet uses encryption to protect this data, ensuring that only authorized users can access it.
+
+5. Seed Phrase
+The seed phrase is a critical component of the wallet, as it is used to generate all addresses and sign transactions. Users are responsible for securely storing their seed phrase, as it is the only way to recover their funds if the wallet is lost or compromised.
+
+6. Address Generation
+Addresses in IOTA are generated using the seed phrase. Trinity Wallet uses deterministic address generation, meaning that the same seed phrase will always generate the same sequence of addresses. This ensures consistency and allows users to manage multiple addresses from a single seed.
+
+7. Transaction Signing
+When a user initiates a transaction, Trinity Wallet signs the transaction using the seed phrase. The signing process ensures that the transaction is authenticated and can be verified by the IOTA network. The wallet uses cryptographic algorithms to generate a valid signature for each transaction.
+
+8. Network Interaction
+Trinity Wallet interacts with the IOTA network through nodes. Nodes are servers that participate in the IOTA network, validating transactions and maintaining the ledger. The wallet can connect to public nodes or allow users to specify their own nodes for increased privacy and control.
+
+9. Transaction Broadcasting
+Once a transaction is signed, Trinity Wallet broadcasts it to the IOTA network. The network validates the transaction and includes it in the ledger if it meets the network's requirements. The wallet monitors the network to confirm that the transaction has been successfully processed.
+
+10. Transaction History
+Trinity Wallet maintains a record of all transactions associated with the user's addresses. This transaction history is stored locally and can be viewed by the user through the UI. The wallet updates the transaction history in real-time as new transactions are confirmed on the network.
+
+11. Security Features
+Trinity Wallet incorporates several security features to protect user funds and data:
+
+Encryption: User data, including seed phrases and transaction history, is encrypted to prevent unauthorized access.
+Two-Factor Authentication (2FA): Users can enable 2FA to add an extra layer of security when accessing the wallet.
+Secure Environments: The wallet can be run in secure environments, such as hardware wallets, to further protect seed phrases.
+12. Backup and Recovery
+Trinity Wallet provides mechanisms for users to back up their seed phrases and recover their wallets in case of loss or damage. Users are encouraged to store their seed phrases securely, such as on paper or in a secure digital vault.
+
+13. Updates and Maintenance
+Trinity Wallet is regularly updated to fix bugs, improve performance, and add new features. Users are notified of updates, and it is recommended to keep the wallet up to date to ensure the best security and functionality.
+
+14. Cross-Platform Compatibility
+Trinity Wallet is designed to be cross-platform, running on various operating systems including Windows, macOS, Linux, and mobile platforms like iOS and Android. This ensures that users can access their wallets from different devices.
+
+15. Community and Support
+Trinity Wallet is an open-source project, meaning that it is developed and maintained by a community of developers and contributors. Users can access community forums, documentation, and support channels to get help and stay informed about the latest developments.
+"
+Conn_Cars,"Connected Car Technologies
+
+Contrary to common belief, connectivity in cars is far from a newfangled concept. In fact, today’s common
+car already comes with a wide variety of connected technologies. The following provides a discussion of some of them, including upcoming technologies as well as ones that are already in use.
+A typical new-model car runs over 100 million lines of code.® The very basic cars have at least 30 electronic
+control units (ECU), which are microprocessor-controlled devices, while luxury vehicles can have up to
+100 ECUs.’ ECUs are all connected across a labyrinth of various digital buses such as CAN (Control Area
+Network), Ethernet, FlexRay, LIN (Local Interconnect Network),® and MOST (Media Oriented Systems
+Transport).2 They operate at different speeds, move different types of data, and enable connections
+across different parts of the car.'? ECUs control many critical functions in a car, including the powertrain,
+the device and system communications body control, power management, the chassis, and vehicular safety. Some of them can be accessed remotely via the head unit.
+
+A modern car can already receive satellite data for connecting to radio stations and getting GPS
+coordinates. In the future, cars will have cellular-satellite connectivity for data, which is especially useful
+when driving through regions with poor cellular coverage.'’ With companies like Amazon, OneWeb, and
+SpaceX racing to launch megaconstellations of internet-beaming satellites into low Earth orbit, cellular-satellite connectivity is expected to become mainstream within a few short years.""*
+
+Most new car models sold in the market have built-in embedded-SIMs (eSIMs), although some of them
+are not activated. Built-in eSIMs are used to transmit telematics data, communicate with back-end cloud
+servers, create Wi-Fi hotspots, and get real-time traffic information, among other functions. Examples of
+cloud-based back-end server applications include smart apps that can remotely start, stop, lock, and
+unlock a car, and apps that can automatically send current road conditions data to the cloud and transmit to other vehicles subscribed to the same service.
+
+RDS (Radio Data System) is used to embed small amounts of digital information in FM broadcasts.
+Typically, the name of the radio station, the title of the song, and the time and date of airing are transmitted.
+Using RDS-TMC (Radio Data System - Traffic Message Channel), a car can also receive real-time traffic alerts, which are then displayed in the head unit.
+
+Bluetooth and Wi-Fi are common in cars nowadays. Users’ mobile phones connect via Bluetooth to the
+head unit of a car to perform activities such as playing music, making phone calls, and accessing address
+books. Some cars, such as those made by Tesla, can connect to home Wi-Fi networks and download
+over-the-air (OTA) software update packages for the cars.'* Many cars can create Wi-Fi hotspots for users to connect to in order to access the internet via the cars’ eSIMs.
+
+With the introduction of popular automotive telematics standards, mobile phone connectivity in cars has
+shifted from simply making phone calls and accessing address books to allowing users to gain access
+to apps, maps, messages, and music. Even basic cars now have support for standards such as Apple
+
+CarPlay and Android Auto, thus making in-car apps available to the masses.
+Vehicle-to-everything (V2X) communication is the driving future that the industry is headed toward. Vehicles
+will be heavily relying on V2X to safely navigate roads. The two major V2X technologies being actively
+developed are 802.11p, a WLAN-based system,'* and C-V2xX, a cellular-based system that includes 5G.""°
+New cars are being equipped with either of these two technologies, but a full rollout of V2X in every new
+car is still several years away, especially since the 802.11p and C-V2X camps are competing for market
+share. Legacy vehicles, or vehicles that are not equipped with V2X technology, will continue to be on the
+road for decades, and V2X vehicles will have to share the road with them. V2X technology will amalgamate
+information from multiple network drop points — eSIM, mobile network, RDS-TMC, Wi-Fi, and 802.11p or
+
+C-V2X — to build complete road situational awareness.
+
+Connected Car Network Architectures
+
+Modern connected cars have internal network architectures that are as diverse as the cars themselves.
+The components communicate using standardized network protocols, but no two network architectures
+are the same. The network architecture can even change between different makes and models from the
+same manufacturer because the features of the cars will vary based on their prices. 
+
+We observed that while the manufacturers in these examples implement their networks differently, all
+three architectures have common components such as the gateway, CAN bus, USB, Wi-Fi, and ECUs
+that perform similar functions and interact in similar ways. To explore the functions and the interactions
+of these components, we created a generic car network architecture. This is not a network architecture
+from a production vehicle but rather a theoretical visualization of the network topology and the major
+
+
+The following discusses the major components and their respective interactions in our generic car network architecture:
+
+The telematics unit includes the eSIM that allows the car to communicate with 3G, LTE, 4G, and (in
+the future) 5G networks. It can transmit telematics data, receive real-time data, communicate with back-end cloud servers, and allow access to the internet.
+
+The RDS/satellite unit receives digital information from FM and satellite broadcasts. Using RDS-
+TMC, a car can receive real-time traffic alerts that are then displayed in the head unit. In the future,
+the satellite component will enable cellular-satellite connectivity for transmitting data as an alternative to 3G, LTE, 4G, and 5G.
+
+Bluetooth and Wi-Fi connectivity is common in modern cars. Users can use Bluetooth to connect
+their mobile phones to a car’s head unit in order to play music, make phone calls, and access address
+books. Some cars can create a Wi-Fi hotspot to provide internet connectivity to users and to connect
+to home Wi-Fi networks to download OTA software updates. Mobile phones connected to Bluetooth and/or Wi-Fi can tether to give a car access to the internet via 3G, LTE, and 4G networks.
+
+On-board diagnostics (OBD-II) provides a vehicle’s self-diagnostics and reporting capabilities. The
+OBD-II port can communicate with the head unit. It can talk directly to the CAN bus and send and receive CAN messages and commands.
+The ECUs in a car communicate via their connected bus and handle functions such as engine control,
+traction control, door locks, climate control, battery management, hybrid powertrain, airbags, and radar functionalities.
+
+The gateway ECU handles all communications with the different buses: CAN, LIN, MOST, and
+FlexRay. Other bus protocols exist, but we used these four in our research since they are found in
+most car models. The gateway ECU ensures that no application can directly communicate with the
+buses, and it correctly switches messages to the target bus. It also performs validation procedures to make sure that the messages conform to standards.
+
+The main board ECU is the central processor for the head unit. It handles functions such as navigation,
+display, radio playing, network connection management, and climate control. In our architecture,
+the main board ECU communicates with the gateway ECU via the SPI (Serial Peripheral Interface)
+communication protocol®° or the universal asynchronous receiver-transmitter (UART)*"" to send and receive CAN messages and commands.
+
+ The Ethernet gateway handles all of the data switching between the radio frequency (RF) modules
+and the head unit. In some car network architectures, the Ethernet gateway can directly communicate
+with the gateway ECU. In our generic architecture, the Ethernet gateway communicates via the head unit.
+
+"
+email_encryption,"Level 1: Context DiagramPurpose:
+Protect sensitive data in email communications by automatically encrypting and decrypting messages.
+Main Components:
+User (Sender/Recipient)Email Client (e.g., Outlook, Gmail)Email Encryption GatewayMail Transfer Agent (MTA)External Mail Server (Recipient's side)Relationships:
+User sends/receives emails via an email client.Email passes through the Email Encryption Gateway before leaving or after entering the network.Gateway communicates with the MTA (e.g., Microsoft Exchange, Postfix) to process messages.Encrypted emails are sent to or received from external mail servers.Level 2: Container DiagramContainers:
+Email ClientUsed by the user to compose and read emails.Mail Transfer Agent (MTA)
+Responsible for routing emails internally and externally.Email Encryption Gateway
+Analyzes, encrypts/decrypts, and enforces policies on email traffic.Policy Engine
+Subsystem of the gateway that determines whether an email should be encrypted.Key Management System
+Stores and manages encryption keys securely.External Mail Server
+Recipient's mail server that receives or sends encrypted emails.Flow (Outgoing Email):
+User writes email in Email Client.Email is sent to the MTA.MTA forwards email to the Email Encryption Gateway.Gateway checks the email against the Policy Engine.If encryption is required, the Gateway uses the Key Management System to encrypt the email.Encrypted email is sent to the recipient’s External Mail Server.Flow (Incoming Email):
+Encrypted email arrives at the Gateway.Gateway decrypts the email using keys from the Key Management System.Decrypted email is passed to the MTA.MTA delivers the email to the recipient’s Email Client.Level 3: Component Diagram (Simplified)Inside the Email Encryption Gateway:
+Components:
+Content Inspector
+Scans email body, attachments, headers for sensitive data.Policy Engine
+Applies rules (e.g., encrypt if credit card number is present).Encryption Module
+Encrypts/decrypts using TLS, S/MIME, PGP, or proprietary methods.Key Manager
+Handles secure key storage, rotation, and access.Logging & Reporting
+Logs encryption/decryption events for auditing."
+bitcoin,"Units and divisibility
+The unit of account of the bitcoin system is the bitcoin. It is most commonly represented with the symbol ₿ and the currency code BTC. However, the BTC code does not conform to ISO 4217 as BT is the country code of Bhutan, and ISO 4217 requires the first letter used in global commodities to be 'X'. XBT, a code that conforms to ISO 4217 though not officially part of it, is used by Bloomberg L.P.
+
+No uniform capitalization convention exists; some sources use Bitcoin, capitalized, to refer to the technology and network, and bitcoin, lowercase, for the unit of account. The Cambridge Advanced Learner's Dictionary and the Oxford Advanced Learner's Dictionary use the capitalized and lowercase variants without distinction.
+
+One bitcoin is divisible to eight decimal places.: ch. 5  Units for smaller amounts of bitcoin are the millibitcoin (mBTC), equal to 1⁄1000 bitcoin, and the satoshi[a] (sat), representing 1⁄100000000 (one hundred millionth) bitcoin, the smallest amount possible. 100,000 satoshis are one mBTC.
+
+Blockchain
+As a decentralized system, bitcoin operates without a central authority or single administrator, so that anyone can create a new bitcoin address and transact without needing any approval.: ch. 1  This is accomplished through a specialized distributed ledger called a blockchain that records bitcoin transactions.
+
+The blockchain is implemented as an ordered list of blocks. Each block contains a SHA-256 hash of the previous block, chaining them in chronological order.: ch. 7  The blockchain is maintained by a peer-to-peer network.: 215–219  Individual blocks, public addresses, and transactions within blocks are public information, and can be examined using a blockchain explorer.
+
+Nodes validate and broadcast transactions, each maintaining a copy of the blockchain for ownership verification. A new block is created every 10 minutes on average, updating the blockchain across all nodes without central oversight. This process tracks bitcoin spending, ensuring each bitcoin is spent only once. Unlike a traditional ledger that tracks physical currency, bitcoins exist digitally as unspent outputs of transactions.: ch. 5 
+
+Addresses and transactions
+
+Simplified chain of ownership. In practice, a transaction can have more than one input and more than one output.
+In the blockchain, bitcoins are linked to specific strings called addresses. Most often, an address encodes a hash of a single public key. Creating such an address involves generating a random private key and then computing the corresponding address. This process is almost instant, but the reverse (finding the private key for a given address) is nearly impossible.: ch. 4  Publishing such a bitcoin address does not risk its private key, and it is extremely unlikely to accidentally generate a used key with funds. To use bitcoins, owners need their private key to digitally sign transactions, which are verified by the network using the public key, keeping the private key secret.: ch. 5  An address may encode the hash of a bitcoin script that specifies more complex requirements to spend the funds. One common example is ""multisig"", in which multiple distinct private keys must mutually sign any transaction that attempts to spend the funds.: ch. 7 
+
+Bitcoin transactions use a Forth-like scripting language,: ch. 5  involving one or more inputs and outputs. When sending bitcoins, a user specifies the recipients' addresses and the amount for each output. This allows sending bitcoins to several recipients in a single transaction. To prevent double-spending, each input must refer to a previous unspent output in the blockchain. Using multiple inputs is similar to using multiple coins in a cash transaction. As in a cash transaction, the sum of inputs can exceed the intended sum of payments. In such a case, an additional output can return the change back to the payer. Unallocated input satoshis in the transaction become the transaction fee.
+
+Losing a private key means losing access to the bitcoins, with no other proof of ownership accepted by the protocol. For instance, in 2013, a user lost ₿7,500, valued at US$7.5 million, by accidentally discarding a hard drive with the private key. It is estimated that around 20% of all bitcoins are lost. The private key must also be kept secret as its exposure, such as through a data breach, can lead to theft of the associated bitcoins.: ch. 10  As of December 2017, approximately ₿980,000 had been stolen from cryptocurrency exchanges.
+
+Mining
+
+Bitcoin mining facility with large amounts of mining hardware
+Miners don't directly act as nodes, but do communicate with nodes. The mining process is primarily intended to prevent double-spending and get all nodes to agree on the content of the blockchain, but it also has desirable side-effects such as making it infeasible for adversaries to stifle valid transactions or alter the historical record of transactions, since doing so generally requires the adversary to have access to more mining power than the rest of the network combined.: ch. 12 
+
+The mining process in bitcoin involves maintaining the blockchain through computer processing power. Miners group and broadcast new transactions into blocks, which are then verified by the network. Each block must contain a proof of work (PoW) to be accepted, involving finding a nonce number that, combined with the block content, produces a hash numerically smaller than the network's difficulty target.: ch. 8  This PoW is simple to verify but hard to generate, requiring many attempts.: ch. 8  PoW forms the basis of bitcoin's consensus mechanism.
+
+The difficulty of generating a block is deterministically adjusted based on the mining power on the network by changing the difficulty target, which is recalibrated every 2,016 blocks (approximately two weeks) to maintain an average time of ten minutes between new blocks. The process requires significant computational power and specialized hardware.: ch. 8 
+
+Miners who successfully create a new block with a valid nonce can collect transaction fees from the included transactions and a fixed reward in bitcoins. To claim this reward, a special transaction called a coinbase is included in the block, with the miner as the payee. All bitcoins in existence have been created through this type of transaction.: ch. 8  This reward is halved every 210,000 blocks until ₿21 million[b] have been issued in total, which is expected to occur around the year 2140. Afterward, miners will only earn from transaction fees. These fees are determined by the transaction's size and the amount of data stored, measured in satoshis per byte.: ch. 8 
+
+The proof of work system and the chaining of blocks make blockchain modifications very difficult, as altering one block requires changing all subsequent blocks. As more blocks are added, modifying older blocks becomes increasingly challenging. In case of disagreement, nodes trust the longest chain, which required the greatest amount of effort to produce. To tamper or censor the ledger, one needs to control the majority of the global hashrate. The high cost required to reach this level of computational power secures the bitcoin blockchain.
+
+The environmental impact of bitcoin mining is controversial and has attracted the attention of regulators, leading to restrictions or incentives in various jurisdictions. As of 2025, a non-peer-reviewed study by the Cambridge Centre for Alternative Finance (CCAF) estimated that bitcoin mining represented 0.5% of global electricity consumption and 0.08% of world greenhouse gas emissions, comparable to Slovakia's emissions. About half of the electricity used is generated through fossil fuels. Moreover, mining hardware's short lifespan results in electronic waste.
+
+Privacy and fungibility
+Bitcoin is pseudonymous, with funds linked to addresses, not real-world identities. While the owners of these addresses are not directly identified, all transactions are public on the blockchain. Patterns of use, like spending coins from multiple inputs, can hint at a common owner. Public data can sometimes be matched with known address owners. Bitcoin exchanges might also need to collect personal data as per legal requirements. For enhanced privacy, users can generate a new address for each transaction.
+
+In the bitcoin network, each bitcoin is treated equally, ensuring basic fungibility. However, users and applications can choose to differentiate between bitcoins. While wallets and software treat all bitcoins the same, each bitcoin's transaction history is recorded on the blockchain. This public record allows for chain analysis, where users can identify and potentially reject bitcoins from controversial sources. For example, in 2012, Mt. Gox froze accounts containing bitcoins identified as stolen.
+
+Wallets
+
+Screenshot of Bitcoin Core
+
+A paper wallet with the address as a QR code while the private key is hidden
+
+A hardware wallet which processes bitcoin transactions without exposing private keys
+Bitcoin wallets were the first cryptocurrency wallets, enabling users to store the information necessary to transact bitcoins.: ch. 1, glossary  The first wallet program, simply named Bitcoin, and sometimes referred to as the Satoshi client, was released in 2009 by Nakamoto as open-source software. Bitcoin Core is among the best known clients. Forks of Bitcoin Core exist such as Bitcoin Unlimited. Wallets can be full clients, with a full copy of the blockchain to check the validity of mined blocks,: ch. 1  or lightweight clients, just to send and receive transactions without a local copy of the entire blockchain. Third-party internet services, called online wallets or hot wallets, store users' credentials on their servers, making them susceptible of hacks. Cold storage protects bitcoins from such hacks by keeping private keys offline, either through specialized hardware wallets or paper printouts.: ch. 4 
+
+Scalability and decentralization challenges
+Main article: Bitcoin scalability problem
+Nakamoto limited the block size to one megabyte. The limited block size and frequency can lead to delayed processing of transactions, increased fees and a bitcoin scalability problem. The Lightning Network, second-layer routing network, is a potential scaling solution.: ch. 8 
+
+Research shows a trend towards centralization in bitcoin as miners join pools for stable income.: 215, 219–222 : 3  If a single miner or pool controls more than 50% of the hashing power, it would allow them to censor transactions and double-spend coins. In 2014, mining pool Ghash.io reached 51% mining power, causing safety concerns, but later voluntarily capped its power at 39.99% for the benefit of the whole network. A few entities also dominate other parts of the ecosystem such as the client software, online wallets, and simplified payment verification (SPV) clients."
+containers,"Virtual containers, often referred to as containerization, are a form of operating system-level virtualization that allows multiple isolated environments, known as containers, to run on a single host operating system. Here’s a detailed breakdown of how virtual containers work:
+
+1. Isolation
+Virtual containers provide isolation at the process level. Each container runs in its own isolated environment, which includes its own file system, network interfaces, and process space. This isolation ensures that applications running in different containers do not interfere with each other.
+
+2. Shared Kernel
+Unlike full virtual machines (VMs), which each have their own operating system kernel, containers share the host operating system's kernel. This sharing significantly reduces the overhead associated with running multiple operating systems, making containers more lightweight and efficient.
+
+3. Resource Management
+Containers allow for fine-grained control over resource allocation, such as CPU, memory, and storage. This is achieved through cgroups (control groups), which are a Linux kernel feature that limits, accounts for, and isolates the resource usage of a collection of processes. Cgroups ensure that each container receives the resources it needs without affecting the performance of other containers.
+
+4. Portability
+Containers encapsulate an application and all its dependencies into a single package, making it easy to move the application from one environment to another without any changes. This portability is crucial for modern development practices, especially in continuous integration and continuous deployment (CI/CD) pipelines.
+
+5. Efficiency
+Containers are more efficient than VMs because they do not require a separate operating system for each application. This means that containers can start up much faster and use fewer resources, making them ideal for scaling applications.
+
+6. Image-Based Deployment
+Containers are typically built from images, which are read-only templates that include everything needed to run an application. These images are created using a Dockerfile or a similar configuration file, which specifies the base image, dependencies, and other configurations. When a container is started, it is created from an image, and any changes made to the container are stored in a writable layer on top of the image.
+
+7. Networking
+Containers can communicate with each other and with the outside world through network interfaces. Containerization platforms, such as Docker, provide default networks that allow containers to communicate with each other using container names. Additionally, containers can be configured to use custom networks, which can be isolated or connected to external networks.
+
+8. Security
+Containers provide a layer of security by isolating applications and their dependencies. However, it is important to note that containers are not a silver bullet for security. Best practices, such as using minimal base images, keeping images up to date, and limiting the permissions of container processes, are essential to maintaining a secure environment.
+
+9. Orchestration
+Container orchestration tools, such as Kubernetes, Docker Swarm, and Mesos, manage and automate the deployment, scaling, and operation of containerized applications. These tools handle tasks such as scheduling containers on hosts, managing container lifecycles, and ensuring high availability.
+
+10. Version Control
+Container images can be versioned, allowing developers to track changes and roll back to previous versions if necessary. This versioning is typically done using tags, which are human-readable labels that correspond to specific image versions.
+
+11. Namespace Isolation
+Containers use Linux namespaces to provide isolation. Namespaces are a feature of the Linux kernel that allows different containers to have their own views of the system resources, such as process IDs, network interfaces, and file systems. This ensures that processes in one container cannot see or affect processes in another container.
+
+12. Union File Systems
+Containers use union file systems, such as OverlayFS or AUFS, to create a layered file system. The base image provides the read-only layer, and any changes made to the container are stored in a writable layer on top of the base image. This allows multiple containers to share the same base image while maintaining their own writable layers, further reducing resource usage.
+
+13. Seccomp and AppArmor
+Containers can use security mechanisms like Seccomp (secure computing mode) and AppArmor to further restrict the capabilities of container processes. Seccomp allows administrators to specify which system calls a container can make, while AppArmor provides path-based access controls to limit the files and directories that a container can access.
+
+14. Container Runtime
+A container runtime is responsible for creating, running, and managing containers. Popular container runtimes include Docker, containerd, and runc. The runtime interacts with the host kernel to create and manage namespaces, cgroups, and other resources needed by the containers.
+
+15. Container Registries
+Container images are stored in container registries, which are repositories that host and distribute container images. Popular container registries include Docker Hub, Google Container Registry, and Amazon Elastic Container Registry. Registries allow developers to store, share, and manage container images across different environments.
+
+In summary, virtual containers provide a lightweight, portable, and efficient way to package and deploy applications. They leverage the host operating system's kernel to isolate applications, manage resources, and ensure security, while also providing the flexibility and scalability needed for modern software development. The combination of namespaces, union file systems, and other Linux kernel features enables containers to run efficiently and securely on a single host.
+
+
+"
+AMPS,"This section contains a high-level feature overview document for the Ankle Monitor Predictor of Stroke
+(AMPS) system. This system is a home use medical device for a fictional stroke diagnostic technique.
+While this example was fabricated to avoid focusing on specific clinical treatments, the overall scenario
+was constructed to highlight typical features encountered when threat modeling medical devices. This
+example will be used throughout Chapter 2.
+The Ankle Monitor Predictor of Stroke System:
+AMPS is a home use medical device worn at night (or when resting) by patients considered at risk for a
+stroke. The AMPS system gathers medical readings that can be later analyzed by a medical professional.
+While the system can help predict a patient’s risk of experiencing a stroke, it does not alert—and is not
+intended to alert—if a stroke is imminent or occurring.
+• Period of expected use: One to three months
+• Medical capability: Diagnostic only
+• Device invasiveness: Low (easily removable, like a wristwatch)
+AMPS Core Use Case:
+Alice has been informed by her doctor, based on her family history and several other risk factors, that she
+is at increased risk of experiencing a stroke. To gain further insight and determine a treatment plan, her
+doctor has instructed her to take the AMPS system home and wear it when she sleeps to take readings.
+She is also directed to install a companion app on her phone that will connect to the AMPS system (via
+Bluetooth) and upload the readings every day to the AMPS cloud service, where they will be analyzed by
+an automated algorithm. Alice’s doctor will check the results after the first week to identify any immediate
+causes of concern, and they will schedule a follow-up consult in two months.
+AMPS Core Technology:
+• A Bluetooth Low Energy (BLE)-enabled ankle monitor that takes physiological measurements
+from the patient
+• A phone/tablet application (app) for patients to pair with their ankle monitor that will display
+readings and communicate with the cloud services
+• AMPSCS: The Ankle Monitor Predictor of Stroke Cloud Service
+AMPS device:
+AMPS is a health monitoring system worn on a patient’s ankle when they are resting. It has the following
+specifications and capabilities:
+• Weight: 0.13kg
+• Power source: Lithium-ion battery recharged via universal serial bus (USB) C cable. Provides up
+to 96 hours of usage under normal circumstances
+• On/off switch
+• Physical Bluetooth pairing button
+• Proprietary stroke-predicting sensor. Note: This is a fictional sensor that requires contact with a
+patient’s skin.
+• Heart rate monitor
+• Body temperature sensor
+• Bluetooth Low Energy (BLE) connectivity
+• Onboard computer and flash storage that can store up to two weeks of patient data for later
+transmission
+Patient App:
+There are two different versions of the patient app, one for Apple iOS, and another for Android devices.
+Both apps contain the following functionality:
+• The app is downloaded by the patient via Google Play or the Apple app store.
+• It can pair with the AMPS device via Bluetooth.
+• It contains an interface for a patient to create an account with the AMPS cloud services, register
+an AMPS device, and authorize clinicians to view their data.
+• If the patient gives permission to the app, it will automatically connect to the AMPS device once a
+day and upload readings to the AMPSCS. If the patient does not give it permission, the app will
+store the data retrieved from the AMPS device until a manual upload is initiated. The amount of
+data transferred per upload is typically less than 1 megabyte a day.
+• The app will display status information to the patient, including the last time the app synced with
+the AMPSCS, a log of the days the app was able to pull data from the AMPS device, and a log
+listing if the AMPS device was successfully collecting data.
+• There is a device management screen that primarily focuses on diagnosing Bluetooth connection
+problems, and common issues that may prevent the AMPS device from collecting data. In
+addition:
+o The app can wipe patient data from the AMPS device.
+o The app can check for and update the firmware of the AMPS device with new versions.
+o The app can revert the AMPS device to factory default settings.
+• If the device does not successfully sync to the cloud services once every 24 hours, an in-app
+notice will appear directing the patient to sync their data. After 72 hours have elapsed since a
+successful sync, the patient will be emailed an automatic reminder.
+AMPS Cloud Service:
+The AMPSCS is a collection of virtual machines hosted in a cloud infrastructure. It consists of the
+following functionality:
+• An application gateway server to inspect and limit traffic going into the AMPSCS systems
+• A set of backend services that perform analysis of the patient data
+• A collection of patient-facing services that communicate with the patient app, provide a web portal
+for patients to register their AMPS device, and authorize clinicians to view their data
+• A collection of health delivery organization (HDO)-facing services that provide a web portal for
+clinicians to create an account and access a patient’s data
+5
+o Clinicians’ access to the portal using a web browser.
+o Authentication is provided via username and password.
+o Clinician service identifiers that clinicians can provide to patients so the patients can
+authorize them through the app.
+o The clinicians can view a summary of the patient’s raw data and the analysis performed
+by the AMPSCS backend algorithms.
+o The ability for clinicians to download a patient’s data via an encrypted zip file"
+CTA,"Contact tracing applications are digital tools designed to help public health officials identify and manage individuals who may have been exposed to infectious diseases, such as COVID-19. These applications use various technologies to track and notify users who have been in close contact with infected individuals. Here’s a detailed breakdown of how contact tracing applications work:
+
+1. User Registration and Onboarding
+Users download and install the contact tracing application from an app store. During the onboarding process, users typically provide basic information such as their name, contact details, and sometimes health information. The application may also request permission to access certain device features, such as the camera, microphone, and location services.
+
+2. Bluetooth and Location Services
+Contact tracing applications primarily use Bluetooth Low Energy (BLE) technology to detect and log proximity to other devices running the same application. BLE is chosen for its low power consumption and ability to maintain continuous communication over short distances (typically up to 2 meters).
+
+Bluetooth Proximity Detection: The application continuously broadcasts a unique identifier (UUID) and listens for UUIDs from other nearby devices. When two devices are in close proximity for a certain period, the interaction is logged.
+Location Services: Some applications may also use GPS to track the user's location. This can be useful for identifying hotspots or areas with high infection rates, but it requires more battery power and can raise privacy concerns.
+3. Data Encryption and Privacy
+To protect user privacy, contact tracing applications use encryption to secure the data they collect. The data is typically encrypted both in transit and at rest.
+
+End-to-End Encryption: Data exchanged between devices is encrypted to prevent interception by unauthorized parties.
+Local Storage Encryption: Data stored on the user's device is encrypted to ensure that it cannot be accessed without proper authorization.
+4. Data Anonymization
+Contact tracing applications often anonymize data to protect user identities. This is achieved by using unique identifiers that do not link back to personal information.
+
+Random Identifiers: Each device uses a random identifier that changes periodically to prevent tracking of individual users.
+Aggregated Data: When data is shared with public health authorities, it is often aggregated to provide insights without revealing individual user information.
+5. Notification System
+When a user tests positive for the disease, they can report their positive test result through the application. The application then notifies all users who have been in close contact with the infected user.
+
+Positive Test Reporting: Users can report their positive test result by entering a code provided by a healthcare provider.
+Contact Notification: The application sends notifications to users who have been in close proximity to the infected user, advising them to self-isolate and get tested.
+6. Health Authority Integration
+Contact tracing applications often integrate with public health authorities to facilitate the reporting and management of positive test results.
+
+Data Sharing: The application may share anonymized data with health authorities to help identify trends and hotspots.
+Healthcare Provider Verification: The application verifies positive test results with healthcare providers to ensure accuracy.
+7. User Interface (UI)
+The user interface of a contact tracing application is designed to be user-friendly and intuitive, allowing users to easily report positive test results, view their contact history, and receive notifications.
+
+Dashboard: A dashboard displays the user's contact history, any notifications, and instructions for self-isolation.
+Settings: Users can manage their privacy settings, enable or disable Bluetooth and location services, and view the application's privacy policy.
+8. Data Retention and Deletion
+Contact tracing applications typically have policies for data retention and deletion to ensure compliance with privacy regulations and to protect user data.
+
+Retention Period: Data is retained for a specific period (e.g., 14 days) to allow for contact tracing.
+Automatic Deletion: After the retention period, data is automatically deleted to protect user privacy.
+9. Security Measures
+Contact tracing applications implement various security measures to protect user data and prevent unauthorized access.
+
+Secure Connections: Data is transmitted over secure connections (e.g., HTTPS) to prevent interception.
+Regular Updates: The application is regularly updated to fix security vulnerabilities and improve performance.
+Access Controls: Access to user data is restricted to authorized personnel only.
+10. User Education and Support
+Contact tracing applications often provide educational resources and support to help users understand how to use the application and protect their privacy.
+
+Tutorials: Tutorials and guides help users understand how to report positive test results and view their contact history.
+FAQs and Support: FAQs and customer support channels provide assistance to users with any questions or issues.
+11. Compliance with Regulations
+Contact tracing applications must comply with various privacy and data protection regulations, such as the General Data Protection Regulation (GDPR) in the European Union and the Health Insurance Portability and Accountability Act (HIPAA) in the United States.
+
+Privacy Policies: The application includes a privacy policy that outlines how user data is collected, used, and protected.
+Regulatory Compliance: The application is designed to comply with relevant regulations to ensure legal and ethical data handling.
+12. Scalability and Performance
+Contact tracing applications are designed to handle large numbers of users and maintain performance even during peak usage.
+
+Cloud Infrastructure: The application uses cloud infrastructure to scale and handle large volumes of data.
+Optimized Algorithms: Efficient algorithms are used to process and analyze proximity data to ensure quick and accurate results.
+13. Interoperability
+Contact tracing applications may need to interoperate with other systems and applications to provide a comprehensive contact tracing solution.
+
+APIs and Integrations: The application provides APIs and integrations with other systems, such as healthcare provider systems and government databases.
+Data Exchange: Data is exchanged between different systems to facilitate contact tracing and public health management.
+"
+vehicle_charging,"EV charging is briefly reviewed in this section. One of the basic components of the charging infrastructure is the EVSE, the device that delivers energy to the EV. The terms “charger” and EVSE
+are used interchangeably in this paper. While wireless charging technologies exist, the context of
+this section is constructed around conductive charging, which uses plugs, sockets, and cabling to
+transfer electrical energy. Chargers are classified by the type and amount of power they transfer
+to the EV. Higher power delivery translates into faster charging times and, when accompanied
+by high­capacity batteries, reduces charging frequency, which assists long­range travel and alleviates “range anxiety,” the fear that the vehicle will be stranded without charging means (Meintz
+et al. 2017). SAE J1772 (2017), a North American standard that specifies requirements for the
+conductive charge system and couplers, defines two levels of alternating current (AC) charging
+and two levels of DC charging, where the level is indicative of charging rate. Typical AC Level 1
+and Level 2 EVSEs supply fixed­voltage AC power at charge rates up to 1.9 kW and 19.2 kW,
+respectively. In comparison, DC Level 2 speeds charging by transferring variable DC power at a
+maximum of 400 kW. HPC is a subjective term; the authors arbitrarily define it as DC charging
+delivering more than 200 kW and is inclusive of DC fast charging with rates in the range 50 kW
+to 250 kW, Extreme Fast Charging with charging rates up to 400 kW, and the Megawatt Charging
+System with rates exceeding 1 MW.
+
+r. In this configuration, the charger supplies variablevoltage DC power to the vehicle. The battery management system (BMS) monitors the battery
+pack, protects the battery pack from operating outside the safe operating area, controls charging
+state and rate by commanding the power controller, manages thermal conditions when appropriate, and calculates ancillary data such as state of health and state of charge. The supply equipment communication controller (SECC) and electric vehicle communication controller (EVCC)
+exchange charging sequencing and management information. The protection circuit disrupts the
+flow of power when overcurrent, overvoltage, electric short, and other deleterious electrical or ther­
+mal conditions are encountered. Finally, the interlock de­energises the cable and connector if the
+charger and EV are uncoupled.
+ISO 15118, J1772, GB/T, and Tesla are competing standards governing charging plugs, connectors, and protocols. The threat models constructed in this paper assume ISO 15118, an international
+standard that allows EVs to automatically identify the user, authorise payment, and begin charging.
+Although the focus of this paper is on ISO 15118, the models and results are sufficiently general
+to be applicable to the other charging standards and systems. ISO 15118 uses two types of communication between EV and EVSE for charge control. The first type, basic signalling, is a simple
+analog pulse­width modulated signal that is used to express basic state (e.g. vehicle connected and
+ready to accept energy, EVSE ready to supply energy). The second type is digital high­level communication. High­level communication is used to exchange more complex information than what
+is possible with basic signalling. ISO 15118 adopted HomePlug GreenPHY power­line communication and Internet Protocol v6 networking for the high­level communication foundation. The
+high­frequency power­line communication carrier is on top of the pulse­width modulated signal,
+using the same control pilot wire that transfers the basic signal. The EVCC configures its network addresses once digital communications are established. A simple multicast­based network
+discovery protocol is used to identify the SECC. The EVCC opens a transmission control protocol
+connection to the SECC using the address and port provided in the discovery response. Depending on the charging authorisation scheme, Transmission Layer Security (TLS) may be required to
+authenticate the EVSE and ensure communication security (TLS is mandatory in the next major revision of ISO 15118 (Mültin 2021)). Once connected, the EVCC and SECC exchange XML­based
+messages.
+The EV charging market participants are identified by roles. The roles relevant to the exercise
+are charging station operator (CSO), charging network operator (CNO), and distribution system
+operator (DSO). The CSO operates and maintains the EVSE and related infrastructure. The CNO
+is responsible for contracting, authentication, authorisation, and billing. The DSO is responsible
+for the safe, stable, and reliable operation of a regional electric grid. The DSO coordinates with the
+CNOs and CSOs to manage electric system capacity and constraints. The threat models presented
+later in this paper document the CSO but not the CNO. This is done for two reasons. First, the
+U.S. market is dominated by vertically integrated corporations performing both the CSO and CNO
+roles. Second, the charging equipment and infrastructure are the focus.
+
+"
+agentic_ai,"An agent is an intelligent software system designed to perceive its environment, reason about it, make
+decisions, and take actions to achieve specific objectives autonomously. More specifically, "" Russell and
+Norvig define agents in their classic “Artificial Intelligence: A Modern Approach” as follows:
+“An intelligent agent is ""an agent that acts appropriately for its circumstances and its goals, is flexible to
+changing environments and goals, learns from experience, and makes appropriate choices given its perceptual
+and computational limitations."" (Artificial Intelligence: A Modern Approach, 4th ed., p. 34”)
+AI Agents use Machine Learning (ML) for reasoning; traditional ML approaches (such as Reinforcement
+Learning) playing a key role in each development. The Open AI Gym (now Farama Foundation’s Gymnasium),
+helped drive the first wave of Agentic AI. However, the advanced capabilities, NLP interface, and scale of
+LLMs have revolutionized agentic AI and accelerated adoption.
+Well-known vendors and enterprises are embracing LLM agents, and Gartner forecasts that by 2028 33% of
+enterprise software applications will utilize agentic AI “enabling 15% of day-to-day work decisions to be
+made autonomously”.
+Core Capabilities
+There are many ways to describe an agent, but typically, an agent or agentic AI system will exhibit the
+following elements:
+● Planning & Reasoning: Agents can reason and decide about the steps necessary to achieve their
+objectives. This includes formulating, tracking, and updating their action plans to handle complex
+tasks (the Reason + Act, ReAct pattern). Modern Agents use LLMs as their reasoning engines, with
+agents using the LLM to decide the control flow of the application. This is a fundamental aspect of
+agentic autonomy. Use of reinforcement in this new generation of agents still plays a role but as a
+mechanism to improve training and reasoning, not core reasoning. This is described in “OpenAI
+Computer-User Agent research preview, a state-of-the-art agent performing interactive web tasks
+for users”. See https://openai.com/index/operator-system-card/
+Advances in LLMs have allowed for sophisticated reasoning and planning strategies such as:
+OWASP.org Page 5
+○ Reflection, where the agent evaluates past actions and their results to determine future
+plans or behaviors. Self-Critic, is a key component of reflection, where the agent critiques
+its own reasoning or output to identify and correct errors.
+○ Chain of Thought is a step-by-step reasoning process in which the agent breaks down
+complex problems into sequential, logical steps. This can involve multi-step workflows,
+including ones without human interaction.
+○ Subgoal Decomposition, which involves dividing a main goal into smaller, manageable tasks
+or milestones to achieve the overall objective
+● Memory / Statefulness to retain and recall information. This is either information from previous
+runs or the previous steps it took in the current run (i.e., the reasoning behind their actions, tools
+they called, the information they retrieved, etc.). Memory can either be either session-based shortterm or persistent long-term memory.
+● Action and Tool Use: Agents can take action to accomplish tasks and invoke tools as part of the
+actions. These can be built-in tools and functions such as browsing the web, conducting complex
+mathematical calculations, and generating or running executable code in response to a user’s query.
+Agents can access more advanced tools via external API calls and a dedicated Tools interface.
+These are complemented by augmented LLMs, which offer the tool invocation from code generated
+by the model via function calling, a specialized form of tool use.
+Agents and LLM Applications
+LLM applications can exhibit agency and agentic behavior as described in the OWASP Top 10 for LLM
+Applications as part of the Excessive Agency and agents can be written as a LLM applications with the ability
+to reason and take action using tools like APIs, databases and so on beyond than just generating text-based
+output. Increasingly, developers use agentic AI frameworks, which encapsulate agentic capabilities and offer
+greater productivity and reuse. Popular frameworks include LangChain/LangFlow, AutoGen, CrewAI, and so
+on
+
+The capabilities described above are implemented as part of the agent software but do not inherently
+translate into standalone, deployable components unless explicitly designed that way. While it is possible to
+build fully modular and externally accessible agent components, doing so adds significant complexity. In
+practice, most agent deployments integrate these capabilities within the software itself rather than
+exposing them as independent services.
+Our aim is to bring together capabilities and concepts found in research and other literature with the developer
+experiences by mapping capabilities to components.
+The following diagram illustrates single-agent architecture, highlighting the key deployable components
+relevant to our threat modeling.
+
+1. An application that has embedded agentic functionality to perform tasks for the user on behalf of
+the user, often outside a specific user session.
+2. An agent generally accepts natural language input similar to inputs used for NLP models. This will
+be textual prompts and optional media such as files, images, sound, or video. The application's code
+implements the core capabilities and most likely relies on abstractions offered by an agentic
+framework (LangChain/LangFlow, AutoGen, Crew.AI, and so on).
+3. One or more LLM models (local or remote) are used for reasoning
+4. Services, including built-in functions, local tools, and local application code, local or remote and
+external services, will be called in two possible manners:
+    a. Function calling and optional Tools interface at the framework/application level
+    b. Function calling by an LLM model returning invocation code to the agent.
+5. Supporting services, part of the agent infrastructure and core functionality.:
+    a. External Storage for persistent Long-term memory
+    b. Other data sources include a Vector database, other data, and content used in RAG. RAG
+related sources can also be seen as part of the tools, but we highlight it here as a core
+supporting service that can be used in any LLM application.
+Multi-agent Architecture
+A multi-agent architecture comprises multiple agents that can scale or combine specialist roles and
+functionality in an agentic solution. In both cases, the architecture is similar except for introducing interagent communication and, optionally, a coordinating agent. See for example the use of a coordinating
+supervisor agent in a multi-agent architecture using Amazon bedrock:
+https://aws.amazon.com/blogs/aws/introducing-multi-agent-collaboration-capability-for-amazonbedrock/
+Depending on the solution, different specialist agents may be introduced with additional capabilities, such
+as the core ones we have defined. The following diagram illustrates an example of multi-agent architecture
+with additional specialized roles and capabilities:
+The diagram depicts an example of multi-agent architecture of specialized agent functionality. Specialized
+functionality is a form of agentic patterns and could be exhibited by any agent depending on the use case.
+Agentic AI Patterns
+Specialized roles and planning strategies contribute to agentic patterns. These patterns are emerging as
+building blocks that can be combined in a single agent; they can help us understand large-scale
+architectures and aid efficient threat-modeling conversations with consistent language. A detailed
+treatment of agentic patterns is beyond the scope of ASI’s work, but we provide below to help standardize
+conversations in threat modeling. 
+
+|Pattern|Description|
+|-------|-----------|
+|Reflective Agent|Agents that iteratively evaluate and critique their own outputs to enhance performance Example: AI code generators that review and debug their own outputs, like Codex with selfevaluation.|
+|Task-Oriented Agent|Agents designed to handle specific tasks with clear objectives. Example: Automated customer service agents for appointment scheduling or returns processing.|
+|Hierarchical Agent|Agents are organized in a hierarchy, managing multi-step workflows or distributed control systems. Example: AI systems for project management where higher-level agents oversee task delegation.|
+|Coordinating Agent|Agents facilitate collaboration and coordination and tracking, ensuring efficient execution Example: a coordinating agent assigns subtasks to specialized agents, such as in AIpowered DevOps workflows where one agent plans deployments, another monitors performance, and a third handles rollbacks based on system feedback.|
+|Distributed Agent Ecosystem|Agents interact within a decentralized ecosystem, often in applications like IoT or marketplaces. Example: Autonomous IoT agents managing smart home devices or a marketplace with buyer and seller agents.|
+|Human-in-the-Loop Collaboration|Agents operate semi-autonomously with human oversight. Example: AI-assisted medical diagnosis tools that provide recommendations but allow doctors to make final decisions.|
+|Self-Learning and Adaptive Agents|Agents adapt through continuous learning from interactions and feedback Example: Copilots, which adapt to user interactions over time, learning from feedback and adjusting responses to better align with user preferences and evolving needs.|
+|RAG-Based Agent|This pattern involves the use of Retrieval Augmented Generation (RAG), where AI agents utilize external knowledge sources dynamically to enhance their decision-making and responses. Example: Agents performing real-time web browsing for research assistance|
+|Planning Agent|Agents autonomously devise and execute multi-step plans to achieve complex objectives. Example: Task management systems organizing and prioritizing tasks based on user goals|
+|Context- Aware Agent|Agents dynamically adjust their behavior and decision-making based on the context in which they operate. Example: Smart home systems adjusting settings based on user preferences and environmental conditions.|"
+tf_m,"Scope
+
+TF-M supports diverse models and topologies. It also implements multiple isolation levels. Each case may focus on different target of evaluation (TOE) and identify different assets and threats. TF-M implementation consists of several secure services, defined as Root of Trust (RoT) service. Those RoT services belong to diverse RoT (Application RoT or PSA RoT) and access different assets and hardware. Therefore each RoT service may require a dedicated threat model.
+
+The analysis on specific models, topologies or RoT services may be covered in dedicated threat model documents. Those threat models are out of the scope of this document.
+
+Target of Evaluation
+A typical TF-M system diagram from a high-level overview is shown below. TF-M is running in the Secure Processing Environment (SPE) and NS software is running in Non-Secure Processing Environment (NSPE). For more details, please refer to Platform Security Architecture Firmware Framework for M (FF-M) [FF-M] and FF-M 1.1 Extensions [FF-M-1.1-Extensions].
+
+The TOE in this general model is the SPE, including TF-M and other components running in SPE.
+
+The TOE can vary in different TF-M models, RoT services and usage scenarios. Refer to dedicated threat models for the specific TOE definitions.
+
+Asset identification
+In this threat model, assets include the general items listed below:
+
+Hardware Root of Trust data, e.g.
+
+Hardware Unique Key (HUK)
+
+Root authentication key
+
+Other embedded root keys
+
+Software RoT data, e.g.
+
+Secure Partition Manager (SPM) code and data
+
+Secure partition code and data
+
+NSPE data stored in SPE
+
+Data generated in SPE as requested by NSPE
+
+Availability of entire RoT service
+
+Secure logs, including event logs
+
+Assets may vary in different use cases and implementations. Additional assets can be defined in an actual usage scenario and a dedicated threat model.
+
+For example, in a network camera use case, the following data can be defined as assets too:
+
+Certificate for connecting to cloud
+
+Session keys for encryption/decryption in the communication with cloud
+
+Keys to encrypt/decrypt the videos and photos
+
+Data Flow Diagram
+The Trust Boundary isolates SPE from NSPE, according to the TOE definition in Target of Evaluation. The Trust Boundary mapped to block diagram is shown in the figure below. Other modules inside SPE stay in the same TOE as TF-M does.
+
+Valid data flows across the Trust Boundary are also shown in the figure below. This threat model only focuses on the data flows related to TF-M.
+
+|Data flow|Description|
+|---------|-----------|
+|DF-1|TF-M initializes NS entry and activates NSPE.<br>On Armv8-M platforms with TrustZone, TF-M will hand over the control to Non-secure state.<br>On dual-cpu platforms, Secure core starts NS core booting.|
+|DF-2|NSPE requests TF-M RoT services. NSPE requests RoT services via PSA Client APIs defined in [FF-M]. In Armv8-M TrustZone scenarios, SG instruction is executed in a Non-secure Callable region to trigger a transition from Non-secure state to Secure state.<br>On dual-cpu platforms, non-secure core sends PSA Client calls to secure core via mailbox.|
+|DF-3|Secure Partitions fetch input data from NS and write back output data to NS. As required in [FF-M], Secure Partitions should not directly access NSPE memory. Instead, RoT services relies on TF-M SPM to access NSPE memory.|
+|DF-4|TF-M returns RoT service results to NSPE after NS request to RoT service is completed. In Armv8-M TrustZone scenarios, it also triggers a transition from Secure state back to Non-secure state. On dual-cpu platforms, secure core returns the result to non-secure core via mailbox.|
+|DF-5|Non-secure interrupts preempt SPE execution in Armv8-M TrustZone scenarios.|
+|DF-6|Secure interrupts preempt NSPE execution in Armv8-M TrustZone scenarios.|
+
+Data flows inside SPE (informative)
+Since all the SPE components stay in the TOE within the same Trust Boundary in this threat model, the data flows between SPE components are not covered in this threat model. Instead, those data flows and corresponding threats will be identified in the dedicated threat model documents of TF-M RoT services and usage scenarios.
+
+Those data flows inside SPE include following examples:
+
+Data flows between TF-M and BL2
+
+Data flows between RoT services and SPM
+
+Data flows between RoT services and corresponding secure hardware and assets, such as secure storage device, crypto hardware accelerator and Hardware Unique Key (HUK)."
+ros_2,"Robot Application Actors, Assets, and Entry Points
+This section defines actors, assets, and entry points for this threat model.
+
+Actors are humans or external systems interacting with the robot. Considering which actors interact with the robot is helpful to determine how the system can be compromised. For instance, actors may be able to give commands to the robot which may be abused to attack the system.
+
+Assets represent any user, resource (e.g. disk space), or property (e.g. physical safety of users) of the system that should be defended against attackers. Properties of assets can be related to achieving the business goals of the robot. For example, sensor data is a resource/asset of the system and the privacy of that data is a system property and a business goal.
+
+Entry points represent how the system is interacting with the world (communication channels, API, sensors, etc.).
+
+Robot Application Actors
+Actors are divided into multiple categories based on whether or not they are physically present next to the robot (could the robot harm them?), are they human or not and are they a “power user” or not. A power user is defined as someone who is knowledgeable and executes tasks which are normally not done by end-users (build and debug new software, deploy code, etc.).
+
+|Actor|Co-Located?|Human?|Power|User?|Notes|
+|-----|-----------|------|-----|-----|-----|
+|Robot User|+|+|-|Human interacting physically with the robot.|
+|Robot Developer / Power User|+|+|+|User with robot administrative access or developer.|
+|Third-Party Robotic System|+|-||Another robot or system capable of physical interaction with the robot.|
+|Teleoperator / Remote User|-|+|-|A human tele-operating the robot or sending commands to it through a client application (e.g. smartphone app)|
+|Cloud Developer|-|+|+|A developer building a cloud service connected to the robot or an analyst who has been granted access to robot data.|
+|Cloud Service|-|-||A service sending commands to the robot automatically (e.g. cloud motion planning service)|
+
+Assets
+Assets are categorized in privacy (robot private data should not be accessible by attackers), integrity (robot behavior should not be modified by attacks) and availability (robot should continue to operate even under attack).
+
+|Asset|Description|
+|-----|-----------|
+|Sensor Data Privacy|Sensor data must not be accessed by unauthorized actors.|
+|Robot Data Stores Privacy|Robot persistent data (logs, software, etc.) must not be accessible by unauthorized actors.|
+|Physical Safety|The robotic system must not harm its users or environment.|
+|Robot Integrity|The robotic system must not damage itself.|
+|Robot Actuators Command Integrity|Unallowed actors should not be able to control the robot actuators.|
+|Robot Behavior Integrity|The robotic system must not allow attackers to disrupt its tasks.|
+|Robot Data Stores Integrity|No attacker should be able to alter robot data.|
+|Compute Capabilities|Robot embedded and distributed (e.g. cloud) compute resources. Starving a robot from its compute resources can prevent it from operating correctly.|
+|Robot Availability|The robotic system must answer commands in a reasonable time.|
+|Sensor Availability|Sensor data must be available to allowed actors shortly after being produced.|
+
+Entry Points
+Entry points describe the system attack surface area (how do actors interact with the system?).
+
+|Name|Description|
+|----|-----------|
+|Robot Components Communication Channels|Robotic applications are generally composed of multiple components talking over a shared bus. This bus may be accessible over the robot WAN link.|
+|Robot Administration Tools|Tools allowing local or remote users to connect to the robot computers directly (e.g. SSH, VNC).|
+|Remote Application Interface|Remote applications (cloud, smartphone application, etc.) can be used to read robot data or send robot commands (e.g. cloud REST API, desktop GUI, smartphone application).|
+|Robot Code Deployment Infrastructure|Deployment infrastructure for binaries or configuration files are granted read/write access to the robot computer's filesystems.|
+|Sensors|Sensors are capturing data which usually end up being injected into the robot middleware communication channels.|
+|Embedded Computer Physical Access|External (HDMI, USB...) and internal (PCI Express, SATA...) ports.|
+
+Robot Application Components and Trust Boundaries
+The system is divided into hardware (embedded general-purpose computer, sensors, actuators), multiple components (usually processes) running on multiple computers (trusted or non-trusted components) and data stores (embedded or in the cloud).
+
+While the computers may run well-controlled, trusted software (trusted components), other off-the-shelf robotics components (non-trusted) nodes may be included in the application. Third-party components may be malicious (extract private data, install a root-kit, etc.) or their QA validation process may not be as extensive as in-house software. Third-party components releasing process create additional security threats (third-party component may be compromised during their distribution).
+
+A trusted robotic component is defined as a node developed, built, tested and deployed by the robotic application owner or vetted partners. As the process is owned end-to-end by a single organization, we can assume that the node will respect its specifications and will not, for instance, try to extract and leak private information. While carefully controlled engineering processes can reduce the risk of malicious behavior (accidentally or voluntarily), it cannot completely eliminate it. Trusted nodes can still leak private data, etc.
+
+Trusted nodes should not trust non-trusted nodes. It is likely that more than one non-trusted component is embedded in any given robotic application. It is important for non-trusted components to not trust each other as one malicious non-trusted node may try to compromise another non-trusted node.
+
+An example of a trusted component could be an in-house (or carefully vetted) IMU driver node. This component may communicate through unsafe channels with other driver nodes to reduce sensor data fusion latency. Trusting components is never ideal but it may be acceptable if the software is well-controlled.
+
+On the opposite, a non-trusted node can be a third-party object tracker. Deploying this node without adequate sandboxing could impact:
+
+User privacy: the node is streaming back user video without their consent
+User safety: the robot is following the object detected by the tracker and its speed is proportional to the object distance. The malicious tracker estimates the object position very far away on purpose to trick the robot into suddenly accelerating and hurting the user.
+System availability: the node may try to consume all available computing resources (CPU, memory, disk) and prevent the robot from performing correctly.
+System Integrity: the robot is following the object detected by the tracker. The attacker can tele-operate the robot by controlling the estimated position of the tracked object (detect an object on the left to make the robot move to the left, etc.).
+Nodes may also communicate with the local filesystem, cloud services or data stores. Those services or data stores can be compromised and should not be automatically trusted. For instance, URDF robot models are usually stored in the robot file system. This model stores robot joint limits. If the robot file system is compromised, those limits could be removed which would enable an attacker to destroy the robot."
+DNS,"DNSSEC (Domain Name System Security Extensions) is a suite of Internet Engineering Task Force (IETF) specifications for securing certain kinds of information provided by the Domain Name System (DNS) as used on Internet Protocol (IP) networks. DNSSEC provides origin authentication of DNS data, data integrity, and authenticated denial of existence. Here's a detailed explanation of how DNSSEC works:
+
+Key Concepts
+DNS: The Domain Name System is a hierarchical and decentralized naming system for computers, services, or other resources connected to the Internet or a private network.
+DNSSEC: Extends DNS to provide security features such as data origin authentication, data integrity, and authenticated denial of existence.
+Public Key Cryptography: Uses pairs of keys: a public key, which is shared openly, and a private key, which is kept secret.
+Digital Signatures: A cryptographic mechanism that verifies the authenticity and integrity of a message.
+Zone Signing Keys (ZSKs): Used to sign the DNS records within a zone.
+Key Signing Keys (KSKs): Used to sign the Zone Signing Keys and other Key Signing Keys.
+Resource Records (RRs): Data stored in DNS zones, such as A, AAAA, CNAME, etc.
+DNSKEY Records: Contain public keys used for DNSSEC.
+RRSIG Records: Contain digital signatures for DNS records.
+NSEC and NSEC3 Records: Provide authenticated denial of existence for DNS records.
+DNSSEC Components
+DNSKEY Records: These records contain the public keys used for signing DNS data.
+RRSIG Records: These records contain digital signatures for DNS records, ensuring their integrity and authenticity.
+NSEC and NSEC3 Records: These records provide authenticated denial of existence, ensuring that a DNS record does not exist without being able to forge a non-existent record.
+DNSSEC Process
+Key Generation:
+
+Zone Signing Keys (ZSKs): Used to sign the DNS records within a zone.
+Key Signing Keys (KSKs): Used to sign the Zone Signing Keys and other Key Signing Keys.
+Signing DNS Records:
+
+The DNS zone administrator signs the DNS records using the ZSK.
+The signed records are stored in the DNS zone along with the corresponding RRSIG records.
+Publishing DNSKEY Records:
+
+The DNSKEY records containing the public keys are published in the DNS zone.
+The KSK is used to sign the DNSKEY records, ensuring their authenticity.
+Querying DNSSEC-Enabled DNS:
+
+When a client queries a DNSSEC-enabled DNS server, the server returns the requested DNS records along with their corresponding RRSIG records.
+The client verifies the signatures using the public keys from the DNSKEY records.
+Authenticated Denial of Existence:
+
+If a DNS record does not exist, the DNS server returns an NSEC or NSEC3 record to prove the non-existence of the record.
+The client verifies the NSEC or NSEC3 record to ensure that the record does not exist.
+Detailed Steps
+Key Generation:
+
+Generate a KSK and a ZSK for the DNS zone.
+The KSK is used to sign the DNSKEY records, and the ZSK is used to sign the DNS records.
+Signing DNS Records:
+
+Use the ZSK to sign each DNS record in the zone.
+Create RRSIG records for each signed DNS record.
+Publishing DNSKEY Records:
+
+Publish the DNSKEY records in the DNS zone.
+Sign the DNSKEY records using the KSK.
+Querying DNSSEC-Enabled DNS:
+
+A client sends a DNS query to a DNSSEC-enabled DNS server.
+The server returns the requested DNS records along with their corresponding RRSIG records.
+Verifying Signatures:
+
+The client verifies the RRSIG records using the public keys from the DNSKEY records.
+If the signatures are valid, the client trusts the DNS records.
+Authenticated Denial of Existence:
+
+If a DNS record does not exist, the DNS server returns an NSEC or NSEC3 record.
+The client verifies the NSEC or NSEC3 record to ensure that the record does not exist.
+Example of DNSSEC Process
+Key Generation:
+
+plaintext
+
+
+KSK: <KSK private key>
+ZSK: <ZSK private key>
+
+Signing DNS Records:
+
+plaintext
+
+
+DNS Record: example.com. A 192.168.1.1
+RRSIG: <signature of DNS record using ZSK>
+
+Publishing DNSKEY Records:
+
+plaintext
+
+
+DNSKEY: <ZSK public key>
+DNSKEY: <KSK public key>
+RRSIG: <signature of DNSKEY records using KSK>
+
+Querying DNSSEC-Enabled DNS:
+
+plaintext
+
+
+Client Query: example.com A
+Server Response:
+  example.com. A 192.168.1.1
+  RRSIG: <signature of DNS record using ZSK>
+  DNSKEY: <ZSK public key>
+  DNSKEY: <KSK public key>
+  RRSIG: <signature of DNSKEY records using KSK>
+
+Verifying Signatures:
+
+Client verifies the RRSIG of the DNS record using the ZSK public key.
+Client verifies the RRSIG of the DNSKEY records using the KSK public key.
+Authenticated Denial of Existence:
+
+plaintext
+
+
+Client Query: nonexist.example.com A
+Server Response:
+  NSEC: example.com. NS
+  RRSIG: <signature of NSEC record using ZSK>
+
+Client verifies the NSEC record using the ZSK public key to ensure that nonexist.example.com does not exist.
+Benefits of DNSSEC
+Data Integrity: Ensures that DNS data has not been tampered with.
+Data Authenticity: Verifies that DNS data comes from the legitimate source.
+Authenticated Denial of Existence: Provides proof that a DNS record does not exist.
+Resistance to Attacks: Protects against DNS spoofing and cache poisoning attacks.
+
+"
